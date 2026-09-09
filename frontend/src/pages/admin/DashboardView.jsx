@@ -80,7 +80,6 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-black tracking-tight text-white">Dashboard</h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -88,7 +87,6 @@ export default function DashboardView() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat, i) => {
           const Icon = stat.icon;
@@ -117,7 +115,6 @@ export default function DashboardView() {
         })}
       </div>
 
-      {/* Processing Alert */}
       {processingCount > 0 && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-amber-300 text-sm">
           <div className="flex items-center gap-3">
@@ -135,7 +132,6 @@ export default function DashboardView() {
         </div>
       )}
 
-      {/* Quick Actions */}
       <div className="p-6 rounded-2xl bg-surface-1/60 border border-white/10 backdrop-blur-md">
         <h2 className="text-base font-bold text-white mb-4 uppercase tracking-wider text-xs text-gray-400">
           Acciones Rápidas
@@ -168,7 +164,6 @@ export default function DashboardView() {
         </div>
       </div>
 
-      {/* Recent Jobs */}
       <div className="p-6 rounded-2xl bg-surface-1/60 border border-white/10 backdrop-blur-md">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">Trabajos Recientes</h2>

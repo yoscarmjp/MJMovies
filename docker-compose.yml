@@ -1,9 +1,6 @@
 version: '3.9'
 
 services:
-  # ====================================
-  # NGINX — Reverse Proxy + Static Files
-  # ====================================
   nginx:
     image: nginx:1.25-alpine
     container_name: mjmovies_nginx
@@ -27,9 +24,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # ====================================
-  # BACKEND — Node.js API
-  # ====================================
   backend:
     build:
       context: ./backend
@@ -74,9 +68,6 @@ services:
       start_period: 60s
       retries: 3
 
-  # ====================================
-  # FRONTEND — Vue 3 Build
-  # ====================================
   frontend:
     build:
       context: ./frontend
@@ -90,33 +81,6 @@ services:
       timeout: 5s
       retries: 3
 
-  # ====================================
-  # MYSQL 8.0
-  # ====================================
-  mysql:
-    image: mysql:8.0
-    container_name: mjmovies_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
-    restart: unless-stopped
-    networks:
-      - mjmovies_net
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
-  # ====================================
-  # REDIS 7
-  # ====================================
   redis:
     image: redis:7-alpine
     container_name: mjmovies_redis
@@ -131,10 +95,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # ====================================
-  # DB MIGRATIONS (run once)
-  # ====================================
   migrate:
     build:
       context: ./backend
@@ -153,9 +113,6 @@ services:
       - mjmovies_net
     restart: "no"
 
-# ====================================
-# VOLUMES
-# ====================================
 volumes:
   mysql_data:
     driver: local
@@ -170,9 +127,6 @@ volumes:
   backend_logs:
     driver: local
 
-# ====================================
-# NETWORKS
-# ====================================
 networks:
   mjmovies_net:
     driver: bridge

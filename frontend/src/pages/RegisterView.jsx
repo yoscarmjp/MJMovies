@@ -108,7 +108,6 @@ export default function RegisterView() {
           <p className="text-sm text-gray-400 text-center mb-8">Únete a MJMovies gratis</p>
 
           <form onSubmit={handleRegister} noValidate className="space-y-4">
-            {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2" htmlFor="reg-email">
                 Correo electrónico
@@ -128,7 +127,6 @@ export default function RegisterView() {
               {errors.email && <p className="mt-1 text-xs text-primary">{errors.email}</p>}
             </div>
 
-            {/* Username */}
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2" htmlFor="reg-username">
                 Nombre de usuario
@@ -148,7 +146,6 @@ export default function RegisterView() {
               {errors.username && <p className="mt-1 text-xs text-primary">{errors.username}</p>}
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2" htmlFor="reg-password">
                 Contraseña
@@ -176,7 +173,6 @@ export default function RegisterView() {
                 </button>
               </div>
 
-              {/* Password strength */}
               {password && (
                 <div className="mt-2 space-y-1">
                   <div className="h-1 w-full bg-surface-3 rounded-full overflow-hidden">
@@ -193,7 +189,6 @@ export default function RegisterView() {
               {errors.password && <p className="mt-1 text-xs text-primary">{errors.password}</p>}
             </div>
 
-            {/* Server validation errors */}
             {serverErrors.length > 0 && (
               <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
                 <ul className="list-disc list-inside space-y-1">
@@ -204,7 +199,6 @@ export default function RegisterView() {
               </div>
             )}
 
-            {/* Global error */}
             {globalError && (
               <div className="flex items-center gap-2 p-3.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
                 <AlertCircle size={18} className="shrink-0" />
@@ -212,7 +206,6 @@ export default function RegisterView() {
               </div>
             )}
 
-            {/* Success message */}
             {success && (
               <div className="flex items-center gap-2 p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
                 <CheckCircle size={18} className="shrink-0" />

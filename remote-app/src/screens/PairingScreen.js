@@ -113,13 +113,11 @@ export default function PairingScreen({ navigation }) {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          {/* Logo */}
           <View style={styles.logo}>
             <Text style={styles.logoText}>MJ<Text style={{ color: '#f0f0f5', opacity: 0.9 }}>Movies</Text></Text>
             <Text style={styles.logoSubtitle}>Control Remoto Digital</Text>
           </View>
 
-          {/* Instructions */}
           <View style={styles.instructionCard}>
             <Text style={styles.instructionTitle}>¿Cómo conectarse?</Text>
             <Text style={styles.instructionStep}>1. Abre MJMovies en tu TV o pantalla</Text>
@@ -128,7 +126,6 @@ export default function PairingScreen({ navigation }) {
             <Text style={styles.instructionStep}>4. Escanea el QR con tu cámara o ingresa los 6 dígitos</Text>
           </View>
 
-          {/* Botón QR Scanner */}
           <TouchableOpacity
             style={styles.qrScanBtn}
             onPress={openScanner}
@@ -144,7 +141,6 @@ export default function PairingScreen({ navigation }) {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Server URL */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>URL del servidor MJMovies</Text>
             <TextInput
@@ -162,7 +158,6 @@ export default function PairingScreen({ navigation }) {
             <Text style={styles.hint}>IP o dominio de tu servidor MJMovies</Text>
           </View>
 
-          {/* Pairing Code */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Código de 6 dígitos</Text>
             <TextInput
@@ -179,7 +174,6 @@ export default function PairingScreen({ navigation }) {
             />
           </View>
 
-          {/* Connect button */}
           <TouchableOpacity
             style={[styles.connectBtn, (loading || pairingCode.length !== 6) && styles.connectBtnDisabled]}
             onPress={handlePair}
@@ -194,7 +188,6 @@ export default function PairingScreen({ navigation }) {
             )}
           </TouchableOpacity>
 
-          {/* Settings link */}
           <TouchableOpacity
             style={styles.settingsLink}
             onPress={() => navigation.navigate('Settings')}
@@ -205,7 +198,6 @@ export default function PairingScreen({ navigation }) {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* QR Scanner Modal */}
       <Modal
         visible={scannerVisible}
         animationType="slide"

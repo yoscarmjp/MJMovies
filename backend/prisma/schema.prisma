@@ -10,9 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ====================================
 // USUARIOS Y AUTENTICACIÓN
-// ====================================
 
 model User {
   id           String   @id @default(uuid()) @db.VarChar(36)
@@ -59,9 +57,7 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-// ====================================
 // PELÍCULAS Y CONTENIDO
-// ====================================
 
 model Movie {
   id             String        @id @default(uuid()) @db.VarChar(36)
@@ -125,9 +121,7 @@ model MovieGenre {
   @@map("movie_genres")
 }
 
-// ====================================
 // TRANSCODIFICACIÓN
-// ====================================
 
 model TranscodeJob {
   id          String       @id @default(uuid()) @db.VarChar(36)
@@ -154,9 +148,7 @@ enum JobStatus {
   FAILED
 }
 
-// ====================================
 // HISTORIAL Y SESIONES
-// ====================================
 
 model WatchHistory {
   id        String   @id @default(uuid()) @db.VarChar(36)

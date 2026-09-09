@@ -17,9 +17,9 @@ if (process.env.NODE_ENV === 'development') {
 export async function connectDB() {
   try {
     await prisma.$connect();
-    logger.info('✅ MySQL connected via Prisma');
+    logger.info('MySQL connected via Prisma');
   } catch (error) {
-    logger.error('❌ MySQL connection failed:', error.message);
+    logger.error('MySQL connection failed:', error.message);
     throw error;
   }
 }

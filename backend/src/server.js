@@ -7,7 +7,6 @@ import compression from 'compression';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
 import { securityMiddleware } from './middleware/security.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
@@ -33,9 +32,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = http.createServer(app);
 
-// ====================================
-// SOCKET.IO — Control Remoto
-// ====================================
 const io = new SocketIOServer(httpServer, {
   cors: {
     origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
@@ -45,9 +41,7 @@ const io = new SocketIOServer(httpServer, {
   pingInterval: 25000,
 });
 
-// ====================================
 // MIDDLEWARE GLOBAL
-// ====================================
 app.set('trust proxy', 1); // Necesario detrás de Nginx
 app.use(corsMiddleware);
 app.use(securityMiddleware);
@@ -56,15 +50,12 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Request logging (solo en desarrollo mostramos todos los detalles)
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 app.use(requestLogger);
 
-// ====================================
 // ARCHIVOS ESTÁTICOS — HLS Streams
-// ====================================
 app.use('/streams', rateLimiter.stream, express.static(
   process.env.STREAMS_DIR || path.join(__dirname, '..', 'streams'),
   {
@@ -73,7 +64,7 @@ app.use('/streams', rateLimiter.stream, express.static(
     setHeaders: (res, filePath) => {
       if (filePath.endsWith('.m3u8')) {
         res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-        res.setHeader('Cache-Control', 'no-cache'); // m3u8 siempre fresco
+        res.setHeader('Cache-Control', 'no-cache');
       }
       if (filePath.endsWith('.ts')) {
         res.setHeader('Content-Type', 'video/MP2T');
@@ -83,15 +74,12 @@ app.use('/streams', rateLimiter.stream, express.static(
   }
 ));
 
-// Posters / imágenes
 app.use('/posters', express.static(
   process.env.POSTERS_DIR || path.join(__dirname, '..', 'posters'),
   { maxAge: '7d' }
 ));
 
-// ====================================
 // RUTAS API
-// ====================================
 app.use('/api/auth', rateLimiter.auth, authRouter);
 app.use('/api/movies', rateLimiter.api, moviesRouter);
 app.use('/api/admin', rateLimiter.api, adminRouter);
@@ -109,20 +97,11 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ====================================
-// SOCKET.IO HANDLERS
-// ====================================
 initializeSocket(io);
 
-// ====================================
-// ERROR HANDLERS (siempre al final)
-// ====================================
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// ====================================
-// INICIO DEL SERVIDOR
-// ====================================
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
 async function startServer() {
@@ -130,20 +109,18 @@ async function startServer() {
     await connectDB();
     await connectRedis();
 
-    // Inicializar cola de transcodificación DESPUÉS de que Redis esté listo
     initTranscodeQueue();
-    logger.info('✅ Transcode queue inicializada');
+    logger.info('Transcode queue inicializada');
 
     httpServer.listen(PORT, '0.0.0.0', () => {
-      logger.info(`🎬 MJMovies API running on port ${PORT} [${process.env.NODE_ENV}]`);
+      logger.info(`MJMovies API running on port ${PORT} [${process.env.NODE_ENV}]`);
     });
   } catch (error) {
-    logger.error('❌ Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully...');
   httpServer.close(() => {
@@ -159,7 +136,6 @@ process.on('SIGINT', () => {
   });
 });
 
-// Capturar errores no manejados - nunca exponer al cliente
 process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled Rejection:', reason);
 });

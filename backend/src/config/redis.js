@@ -33,7 +33,7 @@ export async function connectRedis() {
     await client.connect();
     await client.ping();
     redisClient = client;
-    logger.info('✅ Redis conectado');
+    logger.info('Redis conectado');
     return redisClient;
   } catch (error) {
     logger.warn(`⚠️ Redis no disponible (${error.message}). Continuando con modo en memoria.`);

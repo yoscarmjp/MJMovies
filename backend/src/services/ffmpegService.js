@@ -9,9 +9,7 @@ const STREAMS_DIR = process.env.STREAMS_DIR || './streams';
 if (process.env.FFMPEG_PATH) ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
 if (process.env.FFPROBE_PATH) ffmpeg.setFfprobePath(process.env.FFPROBE_PATH);
 
-/**
- * Obtiene metadata del video usando ffprobe
- */
+
 export function getVideoInfo(filePath) {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
@@ -29,10 +27,6 @@ export function getVideoInfo(filePath) {
   });
 }
 
-/**
- * Transcodifica un MP4 a HLS con múltiples calidades adaptativas
- * Genera: 360p, 720p (si el original >= 720p), 1080p (si el original >= 1080p)
- */
 export async function transcodeToHLS(inputPath, movieId, onProgress) {
   const outputDir = path.join(STREAMS_DIR, movieId);
   fs.mkdirSync(outputDir, { recursive: true });
@@ -136,18 +130,14 @@ function generateMasterPlaylist(qualities, movieId) {
   return playlist;
 }
 
-/**
- * Elimina todos los archivos de un movie del sistema de archivos
- */
+
 export async function deleteMovieFiles(movieId, originalFile) {
   try {
-    // Eliminar segmentos HLS
     const streamDir = path.join(STREAMS_DIR, movieId);
     if (fs.existsSync(streamDir)) {
       fs.rmSync(streamDir, { recursive: true, force: true });
     }
 
-    // Eliminar video original
     if (originalFile && fs.existsSync(originalFile)) {
       fs.unlinkSync(originalFile);
     }

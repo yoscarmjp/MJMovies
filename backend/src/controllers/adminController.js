@@ -13,9 +13,7 @@ function generateSlug(title) {
   return slugify(title, { lower: true, strict: true }) + '-' + Date.now();
 }
 
-// ====================================
 // MOVIES
-// ====================================
 
 export async function getAdminMovies(req, res, next) {
   try {
@@ -216,9 +214,7 @@ export async function deleteMovie(req, res, next) {
   }
 }
 
-// ====================================
 // USERS
-// ====================================
 
 export async function getUsers(req, res, next) {
   try {
@@ -289,9 +285,7 @@ export async function toggleUserStatus(req, res, next) {
   }
 }
 
-// ====================================
 // STATS
-// ====================================
 
 export async function getStats(req, res, next) {
   try {

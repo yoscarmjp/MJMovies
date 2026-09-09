@@ -117,7 +117,6 @@ export default function JobsView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-white">
@@ -145,7 +144,6 @@ export default function JobsView() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-2xl bg-surface-1/80 border border-white/10 backdrop-blur-md overflow-hidden shadow-xl">
         {loading ? (
           <div className="py-20 flex justify-center">

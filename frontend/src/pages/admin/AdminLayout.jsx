@@ -31,9 +31,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-background text-white flex">
-      {/* Sidebar */}
       <aside className="w-64 border-r border-white/10 bg-surface-1/90 backdrop-blur-xl flex flex-col shrink-0 fixed inset-y-0 left-0 z-30">
-        {/* Brand */}
         <div className="p-6 border-b border-white/10">
           <Link to="/" className="flex items-center justify-between text-2xl font-black text-primary tracking-tighter">
             <span>
@@ -45,7 +43,6 @@ export default function AdminLayout() {
           </Link>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -68,7 +65,6 @@ export default function AdminLayout() {
           })}
         </nav>
 
-        {/* User Footer */}
         <div className="p-4 border-t border-white/10 bg-surface-2/40 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-rose-600 flex items-center justify-center font-bold text-sm text-white shrink-0">
@@ -89,7 +85,6 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 ml-64 p-8 sm:p-10 min-w-0">
         <div className="max-w-7xl mx-auto">
           <Outlet />

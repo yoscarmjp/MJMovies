@@ -1,15 +1,10 @@
 import { logger } from '../utils/logger.js';
 import { prisma } from '../config/database.js';
 
-// Cache en memoria para el último estado conocido de cada reproductor
 const playerStates = new Map();
 global.playerStates = playerStates;
 
-/**
- * Socket.io handler para control remoto y notificaciones en tiempo real
- */
 export function initializeSocket(io) {
-  // Hacer io disponible globalmente para los jobs de transcodificación
   global.io = io;
 
   io.on('connection', (socket) => {
@@ -17,29 +12,19 @@ export function initializeSocket(io) {
 
     logger.info(`Socket conectado: ${socket.id} (session: ${sessionId || 'none'}, role: ${role || 'none'})`);
 
-    // ====================================
-    // TV APP — unirse a sala de sesión
-    // ====================================
     if (sessionId) {
       socket.join(`tv:${sessionId}`);
       socket.sessionId = sessionId;
       logger.info(`TV unida a sala: tv:${sessionId}`);
 
-      // Notificar al control remoto que la TV está online
       socket.to(`remote:${sessionId}`).emit('tv:online', { sessionId });
     }
 
-    // ====================================
-    // ADMIN — unirse a sala admin
-    // ====================================
     if (role === 'admin') {
       socket.join('admin');
       logger.info(`Admin conectado: ${socket.id}`);
     }
 
-    // ====================================
-    // PLAYER EVENTS (TV → Server → Remote)
-    // ====================================
     socket.on('player:state', (data) => {
       const activeSession = sessionId || socket.sessionId;
       if (activeSession && data) {
@@ -55,9 +40,7 @@ export function initializeSocket(io) {
       }
     });
 
-    // ====================================
     // REMOTE APP — unirse a sala de control
-    // ====================================
     socket.on('remote:join', async ({ tvSessionId, pairingCode }) => {
       let targetId = tvSessionId;
 
@@ -107,9 +90,7 @@ export function initializeSocket(io) {
       }
     });
 
-    // ====================================
     // COMANDOS DIRECTOS VÍA WEBSOCKET (Remote → TV)
-    // ====================================
     socket.on('remote:command', async ({ tvSessionId, pairingCode, command, payload }) => {
       let targetId = tvSessionId || socket.remoteTvSessionId;
 
@@ -132,9 +113,7 @@ export function initializeSocket(io) {
       }
     });
 
-    // ====================================
     // PEDIR ESTADO ACTUAL DEL REPRODUCTOR
-    // ====================================
     socket.on('player:getState', ({ tvSessionId }) => {
       const targetId = tvSessionId || socket.remoteTvSessionId;
       if (targetId) {
@@ -145,9 +124,7 @@ export function initializeSocket(io) {
       }
     });
 
-    // ====================================
     // DESCONEXIÓN
-    // ====================================
     socket.on('disconnect', (reason) => {
       logger.info(`Socket desconectado: ${socket.id} (${reason})`);
 
@@ -163,13 +140,11 @@ export function initializeSocket(io) {
       }
     });
 
-    // ====================================
     // HEARTBEAT — mantener conexión viva
-    // ====================================
     socket.on('ping', () => {
       socket.emit('pong', { time: Date.now() });
     });
   });
 
-  logger.info('✅ Socket.io inicializado');
+  logger.info('Socket.io inicializado');
 }

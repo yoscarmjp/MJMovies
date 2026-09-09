@@ -94,7 +94,7 @@ export default function HomeView() {
         try {
           const res = await api.get('/movies/user/history')
           setWatchHistory(res.data.history || [])
-        } catch {}
+        } catch { }
       }
     }
 
@@ -117,9 +117,7 @@ export default function HomeView() {
 
   return (
     <div className="pb-24 overflow-x-hidden">
-      {/* HERO SECTION */}
       <section className="relative min-h-[75vh] lg:min-h-[85vh] flex items-center justify-start overflow-hidden">
-        {/* Backdrop Image */}
         {heroBg ? (
           <div className="absolute inset-0 z-0">
             <img
@@ -127,20 +125,17 @@ export default function HomeView() {
               alt={heroItem?.title}
               className="w-full h-full object-cover object-center filter brightness-75 scale-105 transition-transform duration-1000"
             />
-            {/* Gradients */}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
           </div>
         ) : null}
 
-        {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 w-full">
           {heroItem ? (
             <div className="max-w-2xl animate-fade-in">
-              {/* Badges */}
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary text-white shadow-glow-primary">
-                  {heroItem.mediaType === 'tv' ? '📺 Serie' : '🎬 Destacada'}
+                  {heroItem.mediaType === 'tv' ? '📺 Serie' : 'Destacada'}
                 </span>
                 {(heroItem.year || heroItem.releaseDate) && (
                   <span className="text-xs font-semibold text-neutral-300">
@@ -155,17 +150,14 @@ export default function HomeView() {
                 )}
               </div>
 
-              {/* Title */}
               <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-none mb-4 drop-shadow-xl">
                 {heroItem.title}
               </h1>
 
-              {/* Overview */}
               <p className="text-sm sm:text-base text-neutral-300 line-clamp-3 mb-8 leading-relaxed font-normal drop-shadow-md">
                 {heroItem.overview || heroItem.description}
               </p>
 
-              {/* Buttons */}
               <div className="flex items-center gap-4 flex-wrap">
                 <Link
                   to={heroPlayLink}
@@ -198,9 +190,7 @@ export default function HomeView() {
         </div>
       </section>
 
-      {/* SECTIONS */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 -mt-6 relative z-20">
-        {/* Continuar viendo */}
         {isLoggedIn && watchHistory.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -214,7 +204,6 @@ export default function HomeView() {
           </section>
         )}
 
-        {/* Mi Biblioteca Local */}
         {localMovies.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -234,7 +223,6 @@ export default function HomeView() {
           </section>
         )}
 
-        {/* Películas en Tendencia */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -260,7 +248,6 @@ export default function HomeView() {
           )}
         </section>
 
-        {/* Series en Tendencia */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -286,7 +273,6 @@ export default function HomeView() {
           )}
         </section>
 
-        {/* Mejor Calificadas */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -308,7 +294,6 @@ export default function HomeView() {
           )}
         </section>
 
-        {/* Series Mejor Calificadas */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">

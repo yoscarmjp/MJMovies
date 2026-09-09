@@ -1,9 +1,5 @@
 import { logger } from '../utils/logger.js';
 
-/**
- * Logger de requests — registra sin datos sensibles
- * Nunca loguea passwords, tokens, o datos personales
- */
 export function requestLogger(req, res, next) {
   const start = Date.now();
 

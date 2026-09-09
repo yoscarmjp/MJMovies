@@ -96,7 +96,6 @@ export default function MovieView() {
 
   return (
     <div className="relative min-h-screen pb-24">
-      {/* Backdrop */}
       {backdrop && (
         <div className="fixed inset-0 z-0 h-[65vh] overflow-hidden">
           <img
@@ -108,7 +107,6 @@ export default function MovieView() {
         </div>
       )}
 
-      {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
         <button
           onClick={() => navigate(-1)}
@@ -119,7 +117,6 @@ export default function MovieView() {
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-10 items-start">
-          {/* Poster */}
           <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-surface-2 border border-white/10 shadow-2xl sticky top-28">
             <img
               src={movie.posterUrl || movie.backdropUrl}
@@ -128,9 +125,7 @@ export default function MovieView() {
             />
           </div>
 
-          {/* Details */}
           <div>
-            {/* Genres */}
             {movie.genres?.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {movie.genres.map((g) => {
@@ -153,7 +148,6 @@ export default function MovieView() {
               {movie.title}
             </h1>
 
-            {/* Meta Row */}
             <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-300 font-medium mb-6">
               {movie.year && (
                 <div className="flex items-center gap-1 bg-surface-2 px-2.5 py-1 rounded-md border border-white/5">
@@ -181,12 +175,10 @@ export default function MovieView() {
               )}
             </div>
 
-            {/* Description */}
             <p className="text-neutral-300 text-sm sm:text-base leading-relaxed mb-6 max-w-3xl">
               {movie.description}
             </p>
 
-            {/* Director & Cast */}
             <div className="space-y-2 text-xs sm:text-sm mb-8">
               {movie.director && (
                 <p>
@@ -202,7 +194,6 @@ export default function MovieView() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-4 flex-wrap mb-10">
               <Link
                 to={isTv ? `/watch/${movie.id}?season=1&episode=1&type=tv` : `/watch/${movie.id}`}
@@ -223,7 +214,6 @@ export default function MovieView() {
               )}
             </div>
 
-            {/* TV SERIES SEASONS & EPISODES SECTION */}
             {isTv && (
               <div className="pt-8 border-t border-white/10">
                 <div className="flex items-center justify-between mb-4">
@@ -231,7 +221,6 @@ export default function MovieView() {
                   <span className="text-xs text-neutral-400 font-semibold">{episodes.length} capítulos</span>
                 </div>
 
-                {/* Season Tabs */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6">
                   {Array.from({ length: seasonsCount }).map((_, i) => {
                     const sNum = i + 1
@@ -251,7 +240,6 @@ export default function MovieView() {
                   })}
                 </div>
 
-                {/* Episodes List */}
                 {loadingEpisodes ? (
                   <div className="py-12 flex flex-col items-center justify-center">
                     <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-2" />

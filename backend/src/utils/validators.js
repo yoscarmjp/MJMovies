@@ -7,10 +7,7 @@ const safeString = (max = 255, min = 0, minMsg) => {
   return schema.max(max).transform((s) => s.replace(/[<>]/g, ''));
 };
 
-// ====================================
 // AUTH SCHEMAS
-// ====================================
-
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().email('Email inválido').max(255).toLowerCase(),
@@ -34,10 +31,7 @@ export const loginSchema = z.object({
   }),
 });
 
-// ====================================
 // MOVIE SCHEMAS
-// ====================================
-
 export const createMovieSchema = z.object({
   body: z.object({
     title: safeString(255, 1, 'Título requerido'),
@@ -87,9 +81,7 @@ export const uuidParamSchema = z.object({
   }),
 });
 
-// ====================================
 // REMOTE CONTROL SCHEMAS
-// ====================================
 
 export const remoteCommandSchema = z.object({
   body: z.object({
@@ -102,14 +94,9 @@ export const remoteCommandSchema = z.object({
   }),
 });
 
-// ====================================
 // VALIDATOR MIDDLEWARE FACTORY
-// ====================================
 
-/**
- * Middleware que valida req contra un schema Zod
- * Sanitiza automáticamente todos los inputs
- */
+
 export function validate(schema) {
   return async (req, res, next) => {
     try {

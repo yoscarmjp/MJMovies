@@ -32,7 +32,7 @@ async function main() {
       create: { name: genre.name, slug: genre.slug },
     });
   }
-  console.log(`✅ ${genres.length} géneros creados`);
+  console.log(`${genres.length} géneros creados`);
 
   // Crear admin
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@MJMovies2024!';
@@ -51,13 +51,13 @@ async function main() {
     },
   });
 
-  console.log(`✅ Admin creado: ${admin.email}`);
-  console.log('🎬 MJMovies seed completado!');
+  console.log(`Admin creado: ${admin.email}`);
+  console.log('MJMovies seed completado!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error en seed:', e);
+    console.error('Error en seed:', e);
     process.exit(1);
   })
   .finally(async () => {

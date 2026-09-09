@@ -375,7 +375,6 @@ export default function PlayerView() {
       onMouseMove={showControls}
       onTouchStart={showControls}
     >
-      {/* Topbar Header */}
       <div
         className={`fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between gap-4 transition-all duration-300 pointer-events-auto bg-gradient-to-b from-black/95 via-black/60 to-transparent ${
           controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
@@ -402,9 +401,7 @@ export default function PlayerView() {
           </div>
         </div>
 
-        {/* Topbar Action Buttons */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Season & Episode button */}
           {isTv && (
             <button
               onClick={() => setShowEpisodesModal(true)}
@@ -416,7 +413,6 @@ export default function PlayerView() {
             </button>
           )}
 
-          {/* Server dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowServerMenu(!showServerMenu)}
@@ -429,7 +425,6 @@ export default function PlayerView() {
               <span className="text-neutral-400">▾</span>
             </button>
 
-            {/* Servers dropdown menu */}
             {showServerMenu && (
               <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-surface-1/95 border border-white/15 backdrop-blur-2xl shadow-2xl p-2 z-50 animate-slide-up">
                 <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-neutral-400">
@@ -469,7 +464,6 @@ export default function PlayerView() {
             )}
           </div>
 
-          {/* Remote button */}
           <button
             onClick={() => setShowPairingPanel(!showPairingPanel)}
             className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-md transition-colors"
@@ -480,9 +474,7 @@ export default function PlayerView() {
         </div>
       </div>
 
-      {/* Main Video Viewport */}
       <div ref={playerContainerRef} className="relative w-full h-full flex items-center justify-center bg-black">
-        {/* 1. EMBED MODE */}
         {activeServer?.type === 'embed' ? (
           <div className="w-full h-full relative">
             <iframe
@@ -494,7 +486,6 @@ export default function PlayerView() {
               title="Reproductor MJMovies"
             />
 
-            {/* Bottom floating bar for Series navigation */}
             {isTv && (
               <div
                 className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-4 py-2 rounded-full bg-surface-1/90 border border-white/15 backdrop-blur-xl shadow-2xl transition-all duration-300 ${
@@ -529,7 +520,6 @@ export default function PlayerView() {
             )}
           </div>
         ) : (
-          /* 2. NATIVE HLS / MP4 MODE */
           <div className="relative w-full h-full flex items-center justify-center group">
             <video
               ref={videoRef}
@@ -561,7 +551,6 @@ export default function PlayerView() {
               playsInline
             />
 
-            {/* Big center play button when paused */}
             {!isPlaying && !isBuffering && (
               <div
                 onClick={togglePlay}
@@ -573,20 +562,17 @@ export default function PlayerView() {
               </div>
             )}
 
-            {/* Buffering spinner */}
             {isBuffering && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                 <div className="w-14 h-14 rounded-full border-4 border-primary border-t-transparent animate-spin" />
               </div>
             )}
 
-            {/* Custom Bottom Controls Bar */}
             <div
               className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent z-30 transition-all duration-300 ${
                 controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
               }`}
             >
-              {/* Progress Bar */}
               <div
                 onClick={(e) => {
                   if (videoRef.current && duration) {
@@ -609,7 +595,6 @@ export default function PlayerView() {
                 </div>
               </div>
 
-              {/* Controls Row */}
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center gap-4">
                   <button onClick={togglePlay} className="hover:text-primary transition-colors">
@@ -661,7 +646,6 @@ export default function PlayerView() {
         )}
       </div>
 
-      {/* EPISODES SELECTION MODAL */}
       {showEpisodesModal && (
         <div
           onClick={(e) => {
@@ -683,7 +667,6 @@ export default function PlayerView() {
               </button>
             </div>
 
-            {/* Season Tabs */}
             <div className="flex items-center gap-2 px-6 py-3 border-b border-white/10 overflow-x-auto">
               {Array.from({ length: totalSeasons }).map((_, i) => {
                 const sNum = i + 1
@@ -703,7 +686,6 @@ export default function PlayerView() {
               })}
             </div>
 
-            {/* Episodes List */}
             <div className="p-6 overflow-y-auto flex-1 space-y-2.5">
               {loadingEpisodes ? (
                 <div className="py-16 text-center">
@@ -754,7 +736,6 @@ export default function PlayerView() {
         </div>
       )}
 
-      {/* REMOTE CONTROL PAIRING MODAL */}
       {showPairingPanel && (
         <div className="fixed bottom-6 right-6 w-80 rounded-3xl bg-surface-1/95 border border-white/15 backdrop-blur-2xl shadow-2xl p-6 z-[90] animate-slide-up">
           <div className="flex items-center justify-between mb-4">

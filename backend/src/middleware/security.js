@@ -1,16 +1,10 @@
 import helmet from 'helmet';
 
-/**
- * Middleware de seguridad con Helmet
- * Configura 15+ headers HTTP de seguridad para proteger contra
- * XSS, clickjacking, MIME sniffing, y más
- */
 export const securityMiddleware = helmet({
-  // Content Security Policy — solo permitir fuentes conocidas
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Necesario para Vue en dev
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https://image.tmdb.org', 'https://*.tmdb.org'],

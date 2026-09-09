@@ -138,14 +138,12 @@ export default function App() {
       {showNavbar && <Navbar />}
 
       <Routes>
-        {/* Public Routes */}
         <Route path="/" element={<HomeView />} />
         <Route path="/catalog" element={<CatalogView />} />
         <Route path="/movie/:id" element={<MovieView />} />
         <Route path="/external/:id" element={<ExternalMovieView />} />
         <Route path="/watch/:id" element={<PlayerView />} />
 
-        {/* Guest Routes */}
         <Route
           path="/login"
           element={
@@ -163,7 +161,6 @@ export default function App() {
           }
         />
 
-        {/* User Protected Routes */}
         <Route
           path="/profile"
           element={
@@ -173,7 +170,6 @@ export default function App() {
           }
         />
 
-        {/* Admin Protected Routes */}
         <Route
           path="/admin"
           element={
@@ -190,7 +186,6 @@ export default function App() {
           <Route path="jobs" element={<JobsView />} />
         </Route>
 
-        {/* 404 Not Found */}
         <Route path="*" element={<NotFoundView />} />
       </Routes>
 

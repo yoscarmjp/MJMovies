@@ -1,6 +1,5 @@
 FROM node:20-alpine AS base
 
-# Instalar FFmpeg y dependencias del sistema
 RUN apk add --no-cache \
     ffmpeg \
     python3 \
@@ -10,16 +9,10 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# ====================================
-# DEPENDENCIAS
-# ====================================
 FROM base AS deps
 COPY package.json ./
 RUN npm install --omit=dev && npm cache clean --force
 
-# ====================================
-# PRODUCCIÓN
-# ====================================
 FROM base AS production
 
 WORKDIR /app
@@ -27,14 +20,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generar cliente Prisma
 RUN npx prisma generate
 
-# Crear directorios necesarios
 RUN mkdir -p uploads streams posters logs && \
     chmod 755 uploads streams posters logs
 
-# Usuario no-root para seguridad
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S mjmovies -u 1001 -G nodejs && \
     chown -R mjmovies:nodejs /app

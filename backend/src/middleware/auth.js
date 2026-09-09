@@ -3,10 +3,6 @@ import { prisma } from '../config/database.js';
 import { AuthError, ForbiddenError } from './errorHandler.js';
 import { logger } from '../utils/logger.js';
 
-/**
- * Middleware de autenticación JWT
- * Verifica access token del header Authorization o cookie
- */
 export async function authenticate(req, _res, next) {
   try {
     let token = null;
@@ -58,10 +54,7 @@ export async function authenticate(req, _res, next) {
   }
 }
 
-/**
- * Middleware de autorización por rol
- * Uso: requireRole('ADMIN')
- */
+
 export function requireRole(...roles) {
   return (req, _res, next) => {
     if (!req.user) {
@@ -77,10 +70,7 @@ export function requireRole(...roles) {
   };
 }
 
-/**
- * Middleware opcional — no falla si no hay token
- * Útil para rutas públicas que muestran más info si estás logueado
- */
+
 export async function optionalAuth(req, _res, next) {
   try {
     let token = null;

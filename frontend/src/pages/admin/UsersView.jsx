@@ -79,13 +79,11 @@ export default function UsersView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-black tracking-tight text-white">Gestión de Usuarios</h1>
         <p className="text-gray-400 text-sm mt-1">{total} usuarios registrados en MJMovies</p>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -97,7 +95,6 @@ export default function UsersView() {
         />
       </div>
 
-      {/* Table Container */}
       <div className="rounded-2xl bg-surface-1/80 border border-white/10 backdrop-blur-md overflow-hidden shadow-xl">
         {loading ? (
           <div className="py-20 flex justify-center">
@@ -128,7 +125,6 @@ export default function UsersView() {
 
                   return (
                     <tr key={item.id} className="hover:bg-white/5 transition-colors">
-                      {/* User */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-rose-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
@@ -145,10 +141,8 @@ export default function UsersView() {
                         </div>
                       </td>
 
-                      {/* Email */}
                       <td className="py-3 px-4 text-gray-400 text-xs">{item.email}</td>
 
-                      {/* Role */}
                       <td className="py-3 px-4">
                         <span
                           className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${
@@ -161,7 +155,6 @@ export default function UsersView() {
                         </span>
                       </td>
 
-                      {/* Status */}
                       <td className="py-3 px-4">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
@@ -174,10 +167,8 @@ export default function UsersView() {
                         </span>
                       </td>
 
-                      {/* Last login */}
                       <td className="py-3 px-4 text-xs text-gray-400">{formatDate(item.lastLoginAt)}</td>
 
-                      {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button

@@ -69,7 +69,6 @@ export default function RemoteScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Barra superior de estado */}
       <View style={styles.statusBar}>
         <View style={styles.statusLeft}>
           <View style={[styles.statusDot, { backgroundColor: tvOnline ? '#00d084' : '#ff4757' }]} />
@@ -88,7 +87,6 @@ export default function RemoteScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Título de la película y reproducción */}
       <View style={styles.playerInfo}>
         <Text style={styles.movieTitle} numberOfLines={1}>
           {playerState.title || 'MJMovies Player'}
@@ -101,7 +99,6 @@ export default function RemoteScreen({ navigation }) {
         </View>
       </View>
 
-      {/* D-PAD Navigation (Estilo Smart TV / Apple TV Remote) */}
       <View style={styles.dpad} accessible={true} accessibilityLabel="Control de dirección">
         <TouchableOpacity
           style={styles.dpadBtn}
@@ -146,7 +143,6 @@ export default function RemoteScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Controles principales de reproducción */}
       <View style={styles.playbackRow}>
         <TouchableOpacity
           style={styles.ctrlBtn}
@@ -175,7 +171,6 @@ export default function RemoteScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Fila secundaria: Volumen, Pantalla completa y Volver */}
       <View style={styles.secondaryRow}>
         <TouchableOpacity
           style={styles.secBtn}

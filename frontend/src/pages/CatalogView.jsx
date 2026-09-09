@@ -97,7 +97,6 @@ export default function CatalogView() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-24 min-h-screen">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
@@ -108,7 +107,6 @@ export default function CatalogView() {
           </p>
         </div>
 
-        {/* Search input in catalog */}
         <form onSubmit={handleSearchSubmit} className="relative max-w-md w-full">
           <input
             type="text"
@@ -121,9 +119,7 @@ export default function CatalogView() {
         </form>
       </div>
 
-      {/* Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl bg-surface-1 border border-white/10 mb-8">
-        {/* Type pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
           <button
             onClick={() => setFilterType('')}
@@ -156,7 +152,6 @@ export default function CatalogView() {
           </button>
         </div>
 
-        {/* Genres dropdown / select */}
         {genres.length > 0 && !currentType && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-neutral-400 font-medium">Género:</span>
@@ -176,7 +171,6 @@ export default function CatalogView() {
         )}
       </div>
 
-      {/* Grid Content */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -197,7 +191,6 @@ export default function CatalogView() {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-12">
           <button

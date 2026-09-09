@@ -228,7 +228,6 @@ export default function UploadView() {
 
   return (
     <div className="max-w-4xl space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-black tracking-tight text-white">Subir Película</h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -237,7 +236,6 @@ export default function UploadView() {
       </div>
 
       <div className="p-8 rounded-2xl bg-surface-1/80 border border-white/10 backdrop-blur-md shadow-xl space-y-8">
-        {/* Step 1: Video File */}
         <div className="flex gap-4 items-start">
           <div className="w-8 h-8 rounded-full bg-primary text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-md shadow-primary/30">
             1
@@ -307,7 +305,6 @@ export default function UploadView() {
           </div>
         </div>
 
-        {/* Step 2: Poster */}
         <div className="flex gap-4 items-start">
           <div className="w-8 h-8 rounded-full bg-primary text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-md shadow-primary/30">
             2
@@ -344,7 +341,6 @@ export default function UploadView() {
           </div>
         </div>
 
-        {/* Step 3: Metadata */}
         <div className="flex gap-4 items-start">
           <div className="w-8 h-8 rounded-full bg-primary text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-md shadow-primary/30">
             3
@@ -353,7 +349,6 @@ export default function UploadView() {
             <h2 className="text-lg font-bold text-white mb-3">Metadatos de la Película</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Title */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5" htmlFor="meta-title">
                   Título *
@@ -372,7 +367,6 @@ export default function UploadView() {
                 {errors.title && <p className="mt-1 text-xs text-primary">{errors.title}</p>}
               </div>
 
-              {/* Description */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5" htmlFor="meta-desc">
                   Descripción / Sinopsis
@@ -387,7 +381,6 @@ export default function UploadView() {
                 />
               </div>
 
-              {/* Year */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5" htmlFor="meta-year">
                   Año de lanzamiento
@@ -404,7 +397,6 @@ export default function UploadView() {
                 />
               </div>
 
-              {/* Director */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5" htmlFor="meta-director">
                   Director
@@ -419,7 +411,6 @@ export default function UploadView() {
                 />
               </div>
 
-              {/* Rating */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5" htmlFor="meta-rating">
                   Calificación (0 - 10)
@@ -437,7 +428,6 @@ export default function UploadView() {
                 />
               </div>
 
-              {/* Language */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5" htmlFor="meta-lang">
                   Idioma
@@ -457,7 +447,6 @@ export default function UploadView() {
                 </select>
               </div>
 
-              {/* Genres chips */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
                   Géneros
@@ -483,7 +472,6 @@ export default function UploadView() {
                 </div>
               </div>
 
-              {/* Featured checkbox */}
               <div className="sm:col-span-2 pt-2">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
@@ -501,7 +489,6 @@ export default function UploadView() {
           </div>
         </div>
 
-        {/* Upload progress */}
         {uploading && (
           <div className="p-5 rounded-xl bg-surface-2 border border-white/10 space-y-2">
             <div className="flex justify-between text-sm">
@@ -517,7 +504,6 @@ export default function UploadView() {
           </div>
         )}
 
-        {/* Transcode Progress */}
         {transcoding && (
           <div className="p-5 rounded-xl bg-surface-2 border border-white/10 space-y-2">
             <div className="flex items-center justify-between text-sm">
@@ -539,7 +525,6 @@ export default function UploadView() {
           </div>
         )}
 
-        {/* Success */}
         {uploadSuccess && (
           <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-3 text-emerald-400 text-sm">
             <CheckCircle size={20} className="shrink-0" />
@@ -553,7 +538,6 @@ export default function UploadView() {
           </div>
         )}
 
-        {/* Error */}
         {uploadError && (
           <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 flex items-center gap-3 text-red-400 text-sm">
             <AlertCircle size={20} className="shrink-0" />
@@ -561,7 +545,6 @@ export default function UploadView() {
           </div>
         )}
 
-        {/* Buttons */}
         <div className="flex items-center gap-4 pt-4 border-t border-white/10">
           <button
             type="button"

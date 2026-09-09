@@ -80,7 +80,6 @@ export default function ProfileView() {
   return (
     <div className="min-h-screen bg-background text-white pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-center gap-6 p-8 rounded-2xl bg-surface-1/80 backdrop-blur-xl border border-white/10 shadow-xl mb-8">
           <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-primary to-rose-600 flex items-center justify-center text-4xl font-black text-white shadow-xl shadow-primary/30 shrink-0">
             {userInitial}
@@ -97,9 +96,7 @@ export default function ProfileView() {
           </div>
         </div>
 
-        {/* Profile Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* History Section (Left 7 cols) */}
           <section className="lg:col-span-7 p-6 sm:p-8 rounded-2xl bg-surface-1/60 border border-white/10 backdrop-blur-lg">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -177,7 +174,6 @@ export default function ProfileView() {
             )}
           </section>
 
-          {/* Security & Password Section (Right 5 cols) */}
           <section className="lg:col-span-5 p-6 sm:p-8 rounded-2xl bg-surface-1/60 border border-white/10 backdrop-blur-lg flex flex-col justify-between">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
@@ -244,7 +240,6 @@ export default function ProfileView() {
               </form>
             </div>
 
-            {/* Remote hint */}
             <div className="mt-8 p-4 rounded-xl bg-primary/10 border border-primary/20 flex gap-3 items-start">
               <Smartphone size={20} className="text-primary shrink-0 mt-0.5" />
               <div>

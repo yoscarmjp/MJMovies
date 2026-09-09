@@ -74,7 +74,6 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* Logo & Main Nav */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-1 text-2xl font-black tracking-tight text-white group">
             <span className="text-primary group-hover:text-primary-hover transition-colors">MJ</span>
@@ -99,9 +98,7 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Right Action Icons */}
         <div className="flex items-center gap-4">
-          {/* Search Box */}
           <div className="relative">
             {showSearchInput ? (
               <form onSubmit={handleSearchSubmit} className="flex items-center">
@@ -133,7 +130,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* User Profile / Auth */}
           {isLoggedIn ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -146,7 +142,6 @@ export default function Navbar() {
                 </div>
               </button>
 
-              {/* Dropdown Menu */}
               {showUserDropdown && (
                 <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-surface-1/95 border border-white/10 backdrop-blur-xl shadow-2xl p-2 z-50 animate-slide-up">
                   <div className="px-3 py-2 border-b border-white/10">
@@ -203,7 +198,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 text-neutral-300 hover:text-white rounded-lg hover:bg-white/10"
@@ -214,7 +208,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-surface-1/95 border-b border-white/10 backdrop-blur-xl px-4 pt-3 pb-6 space-y-2 animate-slide-up">
           {navLinks.map((link) => (

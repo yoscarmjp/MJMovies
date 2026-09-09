@@ -1,14 +1,12 @@
 import { logger } from '../utils/logger.js';
 
-/**
- * Clases de error personalizadas para manejo consistente
- */
+
 export class AppError extends Error {
   constructor(message, statusCode = 500, code = 'INTERNAL_ERROR') {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
-    this.isOperational = true; // Error esperado, no un bug
+    this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -38,9 +36,7 @@ export class NotFoundError extends AppError {
   }
 }
 
-/**
- * Handler 404 — ruta no encontrada
- */
+
 export function notFoundHandler(req, res) {
   res.status(404).json({
     error: 'Ruta no encontrada',
@@ -49,16 +45,11 @@ export function notFoundHandler(req, res) {
   });
 }
 
-/**
- * Error handler global
- * NUNCA expone stack traces ni detalles internos al cliente
- */
 export function errorHandler(err, req, res, _next) {
   let statusCode = err.statusCode || 500;
   let code = err.code || 'INTERNAL_ERROR';
   let message = err.message || 'Error interno del servidor';
 
-  // Log completo internamente
   if (statusCode >= 500) {
     logger.error({
       message: err.message,
@@ -69,7 +60,6 @@ export function errorHandler(err, req, res, _next) {
       userId: req.user?.id,
     });
 
-    // En producción, nunca mostrar detalles de errores 500
     if (process.env.NODE_ENV === 'production') {
       message = 'Error interno del servidor';
       code = 'INTERNAL_ERROR';
@@ -83,7 +73,6 @@ export function errorHandler(err, req, res, _next) {
     });
   }
 
-  // Manejar errores específicos de Prisma
   if (err.code?.startsWith('P')) {
     if (err.code === 'P2002') {
       statusCode = 409;

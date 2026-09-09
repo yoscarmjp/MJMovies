@@ -30,7 +30,7 @@ export function initTranscodeQueue() {
   transcodeQueue.process(1, async (job) => {
     const { movieId, inputPath, jobId } = job.data;
 
-    logger.info(`🎬 Iniciando transcode job ${jobId} para movie ${movieId}`);
+    logger.info(`Iniciando transcode job ${jobId} para movie ${movieId}`);
 
     try {
       // Marcar como PROCESSING
@@ -52,7 +52,7 @@ export function initTranscodeQueue() {
         await prisma.transcodeJob.update({
           where: { id: jobId },
           data: { progress },
-        }).catch(() => {}); // No fallar por un update de progreso
+        }).catch(() => { }); // No fallar por un update de progreso
 
         // Emitir a clientes vía WebSocket (si io está disponible)
         if (global.io) {
@@ -84,11 +84,11 @@ export function initTranscodeQueue() {
         global.io.to('admin').emit('transcode:done', { movieId, jobId });
       }
 
-      logger.info(`✅ Transcode completado: ${movieId}`);
+      logger.info(`Transcode completado: ${movieId}`);
       return result;
 
     } catch (error) {
-      logger.error(`❌ Transcode fallido: ${movieId}`, error.message);
+      logger.error(`Transcode fallido: ${movieId}`, error.message);
 
       await prisma.transcodeJob.update({
         where: { id: jobId },
@@ -97,12 +97,12 @@ export function initTranscodeQueue() {
           errorMsg: error.message?.substring(0, 1000),
           completedAt: new Date(),
         },
-      }).catch(() => {});
+      }).catch(() => { });
 
       await prisma.movie.update({
         where: { id: movieId },
         data: { status: 'ERROR' },
-      }).catch(() => {});
+      }).catch(() => { });
 
       if (global.io) {
         global.io.to('admin').emit('transcode:error', { movieId, jobId, error: error.message });
@@ -120,7 +120,7 @@ export function initTranscodeQueue() {
     logger.error(`Job ${job.id} falló después de ${job.attemptsMade} intentos:`, error.message);
   });
 
-  logger.info('✅ Transcode queue inicializada');
+  logger.info('Transcode queue inicializada');
   return transcodeQueue;
 }
 
@@ -128,7 +128,7 @@ export function getTranscodeQueue() {
   if (!transcodeQueue) {
     return {
       add: async (data) => {
-        logger.info(`🎬 Transcodificando en segundo plano (modo local sin Redis): ${data.movieId}`);
+        logger.info(`Transcodificando en segundo plano (modo local sin Redis): ${data.movieId}`);
         (async () => {
           try {
             await prisma.transcodeJob.update({
@@ -143,7 +143,7 @@ export function getTranscodeQueue() {
               await prisma.transcodeJob.update({
                 where: { id: data.jobId },
                 data: { progress },
-              }).catch(() => {});
+              }).catch(() => { });
               if (global.io) {
                 global.io.to('admin').emit('transcode:progress', { movieId: data.movieId, jobId: data.jobId, progress });
               }
@@ -169,15 +169,15 @@ export function getTranscodeQueue() {
               global.io.to('admin').emit('transcode:done', { movieId: data.movieId, jobId: data.jobId });
             }
           } catch (err) {
-            logger.error(`❌ Transcode error: ${data.movieId}`, err.message);
+            logger.error(`Transcode error: ${data.movieId}`, err.message);
             await prisma.transcodeJob.update({
               where: { id: data.jobId },
               data: { status: 'FAILED', errorMsg: err.message?.substring(0, 1000), completedAt: new Date() },
-            }).catch(() => {});
+            }).catch(() => { });
             await prisma.movie.update({
               where: { id: data.movieId },
               data: { status: 'ERROR' },
-            }).catch(() => {});
+            }).catch(() => { });
           }
         })();
         return { id: data.jobId };

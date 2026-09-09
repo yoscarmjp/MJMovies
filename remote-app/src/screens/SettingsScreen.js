@@ -111,7 +111,6 @@ export default function SettingsScreen({ navigation }) {
             Ingresa la IP local o dominio donde corre MJMovies
           </Text>
 
-          {/* Test connection */}
           <TouchableOpacity
             style={styles.testBtn}
             onPress={testConnection}

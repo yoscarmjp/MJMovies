@@ -318,9 +318,7 @@ async function tmdbFetch(endpoint, params = {}) {
   }
 }
 
-// ====================================
 // PELÍCULAS
-// ====================================
 
 export async function getPopularMovies(page = 1) {
   const data = await tmdbFetch('/movie/popular', { page });
@@ -378,9 +376,7 @@ export async function getTopRatedMovies(page = 1) {
   };
 }
 
-// ====================================
 // SERIES (TV SHOWS)
-// ====================================
 
 export async function getPopularSeries(page = 1) {
   const data = await tmdbFetch('/tv/popular', { page });
@@ -438,9 +434,7 @@ export async function getTopRatedSeries(page = 1) {
   };
 }
 
-// ====================================
 // COMBINADOS (PELÍCULAS + SERIES)
-// ====================================
 
 export async function getTrendingAll(timeWindow = 'week') {
   const data = await tmdbFetch(`/trending/all/${timeWindow}`);
@@ -751,9 +745,7 @@ export async function getSeriesSeasonEpisodes(tmdbId, seasonNumber = 1) {
   };
 }
 
-// ====================================
 // IMPORTACIÓN A MYSQL LOCAL
-// ====================================
 
 export async function importToDatabase(tmdbId, mediaType = 'movie') {
   const details = await getExternalDetails(tmdbId, mediaType);
@@ -824,7 +816,7 @@ export async function importToDatabase(tmdbId, mediaType = 'movie') {
     },
   });
 
-  logger.info(`✅ Contenido importado a MySQL: ${record.title} (${mediaType})`);
+  logger.info(`Contenido importado a MySQL: ${record.title} (${mediaType})`);
   return record;
 }
 

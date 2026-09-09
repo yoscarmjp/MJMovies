@@ -114,10 +114,7 @@ export const uploadPoster = multer({
   },
 });
 
-/**
- * Valida magic bytes del archivo subido
- * Se llama DESPUÉS de que multer guarda el archivo
- */
+
 export async function validateVideoMagicBytes(req, res, next) {
   if (!req.file) return next();
 

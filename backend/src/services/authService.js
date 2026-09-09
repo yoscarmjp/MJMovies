@@ -9,9 +9,7 @@ const ACCESS_EXPIRES = process.env.JWT_ACCESS_EXPIRES || '15m';
 const REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES || '7d';
 const REFRESH_EXPIRES_MS = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * Genera par de tokens JWT
- */
+
 function generateTokens(userId, role) {
   const accessToken = jwt.sign(
     { userId, role },
@@ -23,16 +21,12 @@ function generateTokens(userId, role) {
   return { accessToken, refreshToken };
 }
 
-/**
- * Hash de refresh token para almacenar en DB
- */
+
 function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-/**
- * Opciones de cookie segura
- */
+
 function getCookieOptions(maxAge) {
   return {
     httpOnly: true,         // JS no puede acceder → protege contra XSS
@@ -43,9 +37,7 @@ function getCookieOptions(maxAge) {
   };
 }
 
-// ====================================
 // SERVICE FUNCTIONS
-// ====================================
 
 export async function registerUser({ email, username, password, ipAddress, userAgent }) {
   // Verificar duplicados con mensaje genérico (anti-enumeración)

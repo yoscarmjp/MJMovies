@@ -62,12 +62,10 @@ export default function LoginView() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background px-4">
-      {/* Glow background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(229,9,20,0.12)_0%,transparent_50%),radial-gradient(ellipse_at_80%_20%,rgba(229,9,20,0.08)_0%,transparent_40%)] pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md">
         <div className="p-8 sm:p-10 rounded-2xl bg-surface-1/90 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/80">
-          {/* Logo */}
           <Link to="/" className="block text-3xl font-black text-primary tracking-tighter text-center mb-6 drop-shadow-[0_0_20px_rgba(229,9,20,0.5)]">
             MJ<span className="text-white opacity-90">Movies</span>
           </Link>
@@ -76,7 +74,6 @@ export default function LoginView() {
           <p className="text-sm text-gray-400 text-center mb-8">Bienvenido de nuevo a tu cine digital</p>
 
           <form onSubmit={handleLogin} noValidate className="space-y-5">
-            {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2" htmlFor="login-email">
                 Correo electrónico
@@ -99,7 +96,6 @@ export default function LoginView() {
               )}
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2" htmlFor="login-password">
                 Contraseña
@@ -131,7 +127,6 @@ export default function LoginView() {
               )}
             </div>
 
-            {/* Global error */}
             {globalError && (
               <div className="flex items-center gap-2 p-3.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
                 <AlertCircle size={18} className="shrink-0" />
@@ -139,7 +134,6 @@ export default function LoginView() {
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}

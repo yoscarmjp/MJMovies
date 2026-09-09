@@ -117,7 +117,6 @@ export default function MoviesView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-white">Películas</h1>
@@ -131,7 +130,6 @@ export default function MoviesView() {
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[240px] max-w-sm">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -157,7 +155,6 @@ export default function MoviesView() {
         </select>
       </div>
 
-      {/* Table Container */}
       <div className="rounded-2xl bg-surface-1/80 border border-white/10 backdrop-blur-md overflow-hidden shadow-xl">
         {loading ? (
           <div className="py-20 flex justify-center">
@@ -185,7 +182,6 @@ export default function MoviesView() {
               <tbody className="divide-y divide-white/5">
                 {movies.map((movie) => (
                   <tr key={movie.id} className="hover:bg-white/5 transition-colors">
-                    {/* Movie info */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         {movie.posterUrl ? (
@@ -206,7 +202,6 @@ export default function MoviesView() {
                       </div>
                     </td>
 
-                    {/* Status */}
                     <td className="py-3 px-4">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusBadge(movie.status)}`}>
                         {statusLabel(movie.status)}
@@ -218,7 +213,6 @@ export default function MoviesView() {
                       )}
                     </td>
 
-                    {/* Genres */}
                     <td className="py-3 px-4">
                       <div className="flex gap-1 flex-wrap">
                         {(movie.genres || []).slice(0, 2).map((g) => (
@@ -232,16 +226,12 @@ export default function MoviesView() {
                       </div>
                     </td>
 
-                    {/* Year */}
                     <td className="py-3 px-4 text-gray-300">{movie.year || '–'}</td>
 
-                    {/* Views */}
                     <td className="py-3 px-4 text-gray-300">{movie.views?.toLocaleString() || 0}</td>
 
-                    {/* Created date */}
                     <td className="py-3 px-4 text-gray-400 text-xs">{formatDate(movie.createdAt)}</td>
 
-                    {/* Actions */}
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {(movie.status === 'ERROR' || movie.status === 'PENDING') && (
@@ -278,7 +268,6 @@ export default function MoviesView() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
@@ -301,7 +290,6 @@ export default function MoviesView() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="max-w-md w-full p-6 sm:p-8 rounded-2xl bg-surface-1 border border-white/10 shadow-2xl space-y-4">

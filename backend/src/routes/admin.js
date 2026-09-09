@@ -22,9 +22,7 @@ const router = Router();
 // Todas las rutas admin requieren auth + rol ADMIN
 router.use(authenticate, requireRole('ADMIN'));
 
-// ====================================
 // PELÍCULAS
-// ====================================
 
 // GET /api/admin/movies
 router.get('/movies', getAdminMovies);
@@ -60,9 +58,7 @@ router.post('/movies/:id/retranscode', validate(uuidParamSchema), retranscodeMov
 // DELETE /api/admin/movies/:id
 router.delete('/movies/:id', validate(uuidParamSchema), deleteMovie);
 
-// ====================================
 // USUARIOS
-// ====================================
 
 // GET /api/admin/users
 router.get('/users', getUsers);
@@ -73,9 +69,7 @@ router.put('/users/:id/role', updateUserRole);
 // PUT /api/admin/users/:id/status
 router.put('/users/:id/status', toggleUserStatus);
 
-// ====================================
 // STATS Y JOBS
-// ====================================
 
 // GET /api/admin/stats
 router.get('/stats', getStats);

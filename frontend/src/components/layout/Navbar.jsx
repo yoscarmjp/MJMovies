@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
-import { Search, User, Shield, LogOut, Menu, X } from 'lucide-react'
+import { Search, User, Shield, LogOut, Menu, X, Bell } from 'lucide-react'
 import Logo from '../../assets/img/mjmovies.webp'
 
 export default function Navbar() {
@@ -18,6 +18,19 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
 
   const dropdownRef = useRef(null)
+  const searchInputRef = useRef(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setShowSearchInput(true)
+        searchInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,15 +93,17 @@ export default function Navbar() {
             <img className='max-w-48' src={Logo} alt="" />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => {
               const isActive = location.pathname + location.search === link.path
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-semibold transition-colors hover:text-white ${
-                    isActive ? 'text-primary' : 'text-neutral-300'
+                  className={`text-sm font-semibold transition-all relative py-1 ${
+                    isActive
+                      ? 'text-white font-bold after:content-[""] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-[2.5px] after:bg-primary after:rounded-full'
+                      : 'text-neutral-300 hover:text-white'
                   }`}
                 >
                   {link.name}
@@ -98,23 +113,45 @@ export default function Navbar() {
           </nav>
         </div>
 
-        <div className="flex  items-center gap-4">
-          <div className="relative">
+        <div className="flex items-center gap-3.5">
+          {/* Desktop Integrated Search Pill */}
+          <div className="hidden lg:block relative">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Buscar película, serie..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 xl:w-72 bg-surface-2/70 hover:bg-surface-2 border border-white/15 focus:border-primary/80 rounded-full py-1.5 pl-9 pr-16 text-xs text-white placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-primary/50 backdrop-blur-md transition-all"
+              />
+              <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-neutral-400 border border-white/10">
+                  Ctrl K
+                </kbd>
+              </div>
+            </form>
+          </div>
+
+          {/* Mobile / Tablet Search Toggle */}
+          <div className="lg:hidden relative">
             {showSearchInput ? (
               <form onSubmit={handleSearchSubmit} className="flex items-center">
                 <input
+                  ref={searchInputRef}
                   type="text"
-                  placeholder="Buscar película, serie..."
+                  placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-48 sm:w-64 bg-surface-2/90 border border-white/20 rounded-full py-1.5 pl-9 pr-8 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary backdrop-blur-md"
+                  className="w-44 sm:w-56 bg-surface-2/95 border border-white/20 rounded-full py-1.5 pl-8 pr-7 text-xs text-white placeholder-neutral-400 focus:outline-none focus:border-primary backdrop-blur-md"
                 />
-                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <button
                   type="button"
                   onClick={() => setShowSearchInput(false)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -125,20 +162,36 @@ export default function Navbar() {
                 className="p-2 text-neutral-300 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                 aria-label="Abrir buscador"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4" />
               </button>
             )}
           </div>
+
+          {/* Notification Bell */}
+          <button
+            type="button"
+            className="relative p-2 text-neutral-300 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            title="Notificaciones"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
+          </button>
 
           {isLoggedIn ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2.5 p-1 rounded-full hover:ring-2 hover:ring-primary transition-all focus:outline-none"
+                className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus:outline-none"
                 aria-label="Menú de usuario"
               >
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-white text-xs uppercase shadow-glow-primary">
+                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center font-bold text-white text-xs uppercase shadow-glow-primary">
                   {user?.username?.slice(0, 2) || 'U'}
+                </div>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-xs font-semibold text-white leading-none">{user?.username}</span>
+                  <span className="text-[10px] text-neutral-400 leading-none mt-0.5">
+                    {user?.role === 'ADMIN' ? 'Admin' : 'User'}
+                  </span>
                 </div>
               </button>
 
@@ -182,16 +235,16 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="text-xs font-bold text-neutral-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                className="text-xs font-semibold text-neutral-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors hidden sm:block"
               >
                 Iniciar Sesión
               </Link>
               <Link
                 to="/register"
-                className="text-xs font-bold text-white bg-primary hover:bg-primary-hover px-4 py-2 rounded-lg shadow-glow-primary transition-colors"
+                className="text-xs font-bold text-white bg-primary hover:bg-primary-hover px-4 py-1.5 rounded-full shadow-glow-primary transition-all hover:scale-105"
               >
                 Registrarse
               </Link>

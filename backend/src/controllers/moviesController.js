@@ -77,30 +77,40 @@ export async function getMovie(req, res, next) {
     const { id } = req.params;
 
     const cacheKey = `movie:${id}`;
-    const cached = await cache.get(cacheKey);
-    if (cached) return res.json(cached);
+    let baseMovie = await cache.get(cacheKey);
 
-    const movie = await prisma.movie.findUnique({
-      where: { id },
-      include: {
-        genres: { select: { genre: { select: { name: true, slug: true } } } },
-      },
-    });
+    if (!baseMovie) {
+      const movie = await prisma.movie.findUnique({
+        where: { id },
+        include: {
+          genres: { select: { genre: { select: { name: true, slug: true } } } },
+        },
+      });
 
-    if (!movie || movie.status !== 'READY') {
-      throw new NotFoundError('Película');
+      if (!movie || movie.status !== 'READY') {
+        throw new NotFoundError('Película');
+      }
+
+      // Incrementar views de forma no bloqueante
+      prisma.movie.update({
+        where: { id },
+        data: { views: { increment: 1 } },
+      }).catch(() => {});
+
+      baseMovie = { ...movie, genres: movie.genres.map((g) => g.genre) };
+      await cache.set(cacheKey, baseMovie, CACHE_TTL);
     }
 
-    // Incrementar views de forma no bloqueante
-    prisma.movie.update({
-      where: { id },
-      data: { views: { increment: 1 } },
-    }).catch(() => {});
+    let progress = 0;
+    if (req.user?.id) {
+      const history = await prisma.watchHistory.findUnique({
+        where: { userId_movieId: { userId: req.user.id, movieId: id } },
+        select: { position: true },
+      });
+      if (history) progress = history.position;
+    }
 
-    const result = { ...movie, genres: movie.genres.map((g) => g.genre) };
-    await cache.set(cacheKey, result, CACHE_TTL);
-
-    res.json(result);
+    res.json({ ...baseMovie, progress });
   } catch (error) {
     next(error);
   }
@@ -196,8 +206,12 @@ export async function getWatchHistory(req, res, next) {
           select: {
             id: true,
             title: true,
+            slug: true,
             posterUrl: true,
+            backdropUrl: true,
             duration: true,
+            rating: true,
+            year: true,
           },
         },
       },

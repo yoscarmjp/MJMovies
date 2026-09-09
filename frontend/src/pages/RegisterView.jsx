@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { useToastStore } from '../stores/toastStore';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function RegisterView() {
-  const { register } = useAuthStore();
+  const navigate = useNavigate();
+  const { register, login } = useAuthStore();
+  const { success: toastSuccess } = useToastStore();
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -83,13 +86,21 @@ export default function RegisterView() {
 
     setLoading(true);
     const result = await register(email, username, password);
-    setLoading(false);
 
     if (result.success) {
-      setSuccess(true);
+      toastSuccess(`¡Cuenta creada! Bienvenido, ${username}`);
+      const loginRes = await login(email, password);
+      setLoading(false);
+      if (loginRes.success) {
+        navigate('/', { replace: true });
+      } else {
+        navigate('/login', { replace: true });
+      }
     } else if (result.errors) {
+      setLoading(false);
       setServerErrors(result.errors);
     } else {
+      setLoading(false);
       setGlobalError(result.error || 'Error al crear la cuenta. Intenta más tarde.');
     }
   };

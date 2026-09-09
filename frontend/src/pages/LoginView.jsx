@@ -53,10 +53,13 @@ export default function LoginView() {
     if (result.success) {
       toastSuccess(`¡Bienvenido ${result.user.username}!`);
       const params = new URLSearchParams(location.search);
-      const redirect = params.get('redirect') || (result.user.role === 'ADMIN' ? '/admin' : '/');
-      navigate(redirect);
+      let redirect = params.get('redirect');
+      if (!redirect || redirect.includes('any-movie-id') || redirect === '/login') {
+        redirect = result.user.role === 'ADMIN' ? '/admin' : '/';
+      }
+      navigate(redirect, { replace: true });
     } else {
-      setGlobalError('Credenciales incorrectas. Verifica tu email y contraseña.');
+      setGlobalError(result.error || 'Credenciales incorrectas. Verifica tu email y contraseña.');
     }
   };
 

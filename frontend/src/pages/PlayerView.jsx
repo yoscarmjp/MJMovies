@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import Hls from 'hls.js'
 import api from '../services/api'
+import { useToastStore } from '../stores/toastStore'
 import {
   Play,
   Pause,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react'
 
 export default function PlayerView() {
+  const { info: toastInfo } = useToastStore()
   const { id } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -59,6 +61,8 @@ export default function PlayerView() {
   const playerContainerRef = useRef(null)
   const hlsRef = useRef(null)
   const controlsTimeoutRef = useRef(null)
+  const savedProgressRef = useRef(0)
+  const hasResumedRef = useRef(false)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [isBuffering, setIsBuffering] = useState(false)
@@ -154,6 +158,19 @@ export default function PlayerView() {
         setMovie(mData)
         document.title = `${mData.title} — MJMovies`
 
+        // Check saved progress
+        const queryT = parseInt(searchParams.get('t') || '0', 10)
+        let localT = 0
+        try {
+          const raw = localStorage.getItem(`mjmovies_progress_${id}`)
+          if (raw) localT = JSON.parse(raw).position || 0
+        } catch {}
+
+        const bestProgress = queryT || mData?.progress || localT || 0
+        if (bestProgress > 5) {
+          savedProgressRef.current = bestProgress
+        }
+
         // 3. Cargar episodios si es serie
         if (sData.isTv || sData.mediaType === 'tv') {
           await fetchEpisodes(currentSeason, sData.tmdbId)
@@ -168,6 +185,41 @@ export default function PlayerView() {
 
     loadContent()
   }, [id])
+
+  const saveProgress = useCallback((pos, dur) => {
+    if (!pos || pos < 5) return
+    const posSec = Math.floor(pos)
+    const durSec = Math.floor(dur || duration || (movie?.duration ? Number(movie.duration) : 5400))
+
+    const record = {
+      id,
+      movieId: id,
+      position: posSec,
+      duration: durSec,
+      updatedAt: new Date().toISOString(),
+      title: movie?.title || 'Película',
+      posterUrl: movie?.posterUrl,
+      backdropUrl: movie?.backdropUrl,
+      mediaType: isTv ? 'tv' : 'movie',
+      season: currentSeason,
+      episode: currentEpisode,
+    }
+
+    try {
+      localStorage.setItem(`mjmovies_progress_${id}`, JSON.stringify(record))
+
+      const raw = localStorage.getItem('mjmovies_recent_history') || '[]'
+      let list = JSON.parse(raw)
+      list = list.filter((item) => (item.id || item.movieId) !== id)
+      list.unshift(record)
+      localStorage.setItem('mjmovies_recent_history', JSON.stringify(list.slice(0, 30)))
+    } catch {}
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    if (isUuid) {
+      api.post(`/movies/${id}/progress`, { position: posSec }).catch(() => {})
+    }
+  }, [id, movie, duration, isTv, currentSeason, currentEpisode])
 
   // Native Player initialization when HLS server is active
   useEffect(() => {
@@ -194,6 +246,13 @@ export default function PlayerView() {
         hls.attachMedia(video)
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (!hasResumedRef.current && savedProgressRef.current > 5) {
+            hasResumedRef.current = true
+            video.currentTime = savedProgressRef.current
+            const m = Math.floor(savedProgressRef.current / 60)
+            const s = Math.floor(savedProgressRef.current % 60)
+            toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
+          }
           video.play().catch(() => setIsPlaying(false))
         })
 
@@ -216,6 +275,10 @@ export default function PlayerView() {
         })
       } else {
         video.src = isHlsUrl ? url : (url || mp4Fallback)
+        if (!hasResumedRef.current && savedProgressRef.current > 5) {
+          hasResumedRef.current = true
+          video.currentTime = savedProgressRef.current
+        }
         video.play().catch(() => setIsPlaying(false))
       }
     }
@@ -227,6 +290,33 @@ export default function PlayerView() {
       }
     }
   }, [activeServer])
+
+  // Periodic progress saving interval
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (videoRef.current && isPlaying) {
+        saveProgress(videoRef.current.currentTime, videoRef.current.duration)
+      } else if (activeServer?.type === 'embed') {
+        savedProgressRef.current = (savedProgressRef.current || 0) + 5
+        saveProgress(savedProgressRef.current, movie?.duration || 5400)
+      }
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [isPlaying, activeServer, saveProgress, movie])
+
+  // Save on unload / leave
+  useEffect(() => {
+    const handleUnload = () => {
+      if (videoRef.current) {
+        saveProgress(videoRef.current.currentTime, videoRef.current.duration)
+      }
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    return () => {
+      handleUnload()
+      window.removeEventListener('beforeunload', handleUnload)
+    }
+  }, [saveProgress])
 
   // Remote Pairing Setup
   useEffect(() => {
@@ -540,10 +630,35 @@ export default function PlayerView() {
                 }
               }}
               onLoadedMetadata={() => {
-                if (videoRef.current) setDuration(videoRef.current.duration || 0)
+                if (videoRef.current) {
+                  const vidDur = videoRef.current.duration || 0
+                  setDuration(vidDur)
+                  if (!hasResumedRef.current && savedProgressRef.current > 5) {
+                    hasResumedRef.current = true
+                    const targetTime = Math.min(savedProgressRef.current, vidDur > 15 ? vidDur - 10 : savedProgressRef.current)
+                    videoRef.current.currentTime = targetTime
+                    const m = Math.floor(targetTime / 60)
+                    const s = Math.floor(targetTime % 60)
+                    toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
+                  }
+                }
+              }}
+              onCanPlay={() => {
+                if (!hasResumedRef.current && savedProgressRef.current > 5 && videoRef.current) {
+                  hasResumedRef.current = true
+                  videoRef.current.currentTime = savedProgressRef.current
+                  const m = Math.floor(savedProgressRef.current / 60)
+                  const s = Math.floor(savedProgressRef.current % 60)
+                  toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
+                }
               }}
               onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
+              onPause={() => {
+                setIsPlaying(false)
+                if (videoRef.current) {
+                  saveProgress(videoRef.current.currentTime, videoRef.current.duration)
+                }
+              }}
               onWaiting={() => setIsBuffering(true)}
               onPlaying={() => setIsBuffering(false)}
               onEnded={() => {

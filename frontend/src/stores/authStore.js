@@ -3,16 +3,10 @@ import api from '../services/api.js'
 
 export const useAuthStore = create((set, get) => ({
   user: null,
+  isLoggedIn: false,
+  isAdmin: false,
   initialized: false,
   loading: false,
-
-  get isLoggedIn() {
-    return !!get().user
-  },
-
-  get isAdmin() {
-    return get().user?.role === 'ADMIN'
-  },
 
   initialize: async () => {
     if (get().initialized) return
@@ -20,11 +14,18 @@ export const useAuthStore = create((set, get) => ({
       const token = localStorage.getItem('accessToken')
       if (token) {
         const { data } = await api.get('/auth/me')
-        set({ user: data.user })
+        const user = data.user
+        set({
+          user,
+          isLoggedIn: !!user,
+          isAdmin: user?.role === 'ADMIN',
+        })
+      } else {
+        set({ user: null, isLoggedIn: false, isAdmin: false })
       }
     } catch {
       localStorage.removeItem('accessToken')
-      set({ user: null })
+      set({ user: null, isLoggedIn: false, isAdmin: false })
     } finally {
       set({ initialized: true })
     }
@@ -37,8 +38,14 @@ export const useAuthStore = create((set, get) => ({
       if (data.accessToken) {
         localStorage.setItem('accessToken', data.accessToken)
       }
-      set({ user: data.user, loading: false })
-      return { success: true, user: data.user }
+      const user = data.user
+      set({
+        user,
+        isLoggedIn: !!user,
+        isAdmin: user?.role === 'ADMIN',
+        loading: false,
+      })
+      return { success: true, user }
     } catch (error) {
       set({ loading: false })
       return {
@@ -71,7 +78,7 @@ export const useAuthStore = create((set, get) => ({
       // Ignorar errores en logout
     } finally {
       localStorage.removeItem('accessToken')
-      set({ user: null })
+      set({ user: null, isLoggedIn: false, isAdmin: false })
     }
   },
 }))

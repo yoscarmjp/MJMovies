@@ -9,6 +9,7 @@ import { useAuthStore } from './stores/authStore';
 
 // Components
 import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
 import ToastContainer from './components/ui/ToastContainer';
 
 // Pages
@@ -83,9 +84,9 @@ function AdminRoute({ children }) {
   return children;
 }
 
-// Route Guard: Guest Only (e.g. Login, Register)
 function GuestRoute({ children }) {
   const { isLoggedIn, initialized } = useAuthStore();
+  const location = useLocation();
 
   if (!initialized) {
     return (
@@ -96,7 +97,12 @@ function GuestRoute({ children }) {
   }
 
   if (isLoggedIn) {
-    return <Navigate to="/" replace />;
+    const params = new URLSearchParams(location.search);
+    let redirect = params.get('redirect');
+    if (!redirect || redirect.includes('any-movie-id') || redirect === '/login') {
+      redirect = '/';
+    }
+    return <Navigate to={redirect} replace />;
   }
 
   return children;
@@ -142,7 +148,14 @@ export default function App() {
         <Route path="/catalog" element={<CatalogView />} />
         <Route path="/movie/:id" element={<MovieView />} />
         <Route path="/external/:id" element={<ExternalMovieView />} />
-        <Route path="/watch/:id" element={<PlayerView />} />
+        <Route
+          path="/watch/:id"
+          element={
+            <ProtectedRoute>
+              <PlayerView />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/login"
@@ -188,6 +201,8 @@ export default function App() {
 
         <Route path="*" element={<NotFoundView />} />
       </Routes>
+
+      {showNavbar && <Footer />}
 
       <ToastContainer />
     </div>

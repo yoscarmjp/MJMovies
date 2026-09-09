@@ -11,7 +11,7 @@ import useRemoteStore from '../store/remoteStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function PairingScreen({ navigation }) {
-  const [serverUrl, setServerUrl] = useState('http://192.168.1.100:80');
+  const [serverUrl, setServerUrl] = useState('http://192.168.1.7:5000');
   const [pairingCode, setPairingCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -73,10 +73,26 @@ export default function PairingScreen({ navigation }) {
   }
 
   async function doPair(urlToUse, codeToUse) {
-    const url = urlToUse.trim().replace(/\/$/, '');
-    const code = codeToUse.trim();
+    let url = (urlToUse || '').trim().replace(/\/$/, '');
+    const code = (codeToUse || '').trim();
 
-    if (!url) return Alert.alert('Error', 'Ingresa la URL del servidor MJMovies');
+    if (!url) return Alert.alert('Error', 'Ingresa la URL del servidor MJMovies (ej: http://192.168.1.7:5000)');
+
+    // Añadir protocolo si falta
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `http://${url}`;
+    }
+
+    // Corregir automáticamente si el usuario puso el puerto del frontend (3000) o expo (8081)
+    if (url.includes(':3000')) {
+      url = url.replace(':3000', ':5000');
+    } else if (url.includes(':8081')) {
+      url = url.replace(':8081', ':5000');
+    } else if (!url.match(/:\d+$/)) {
+      // Si el usuario puso solo la IP sin puerto, agregar el puerto 5000 del backend
+      url = `${url}:5000`;
+    }
+
     if (code.length !== 6 || !/^\d+$/.test(code)) {
       return Alert.alert('Error', 'El código de emparejamiento debe ser de 6 dígitos');
     }
@@ -96,7 +112,10 @@ export default function PairingScreen({ navigation }) {
         Alert.alert('Error de emparejamiento', result.error || 'Código inválido o expirado');
       }
     } catch {
-      Alert.alert('Error', 'No se pudo conectar al servidor. Verifica la URL y que el dispositivo esté en la misma red Wi-Fi.');
+      Alert.alert(
+        'Error de conexión',
+        'No se pudo conectar al servidor. Asegúrate de poner la URL del Backend con puerto 5000 (ej: http://192.168.1.7:5000) y que ambos dispositivos estén en el mismo Wi-Fi.'
+      );
     } finally {
       setLoading(false);
     }
@@ -142,12 +161,12 @@ export default function PairingScreen({ navigation }) {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>URL del servidor MJMovies</Text>
+            <Text style={styles.label}>URL del Servidor MJMovies (Backend - Puerto 5000)</Text>
             <TextInput
               style={styles.input}
               value={serverUrl}
               onChangeText={setServerUrl}
-              placeholder="http://192.168.1.100"
+              placeholder="http://192.168.1.7:5000"
               placeholderTextColor="#555577"
               keyboardType="url"
               autoCapitalize="none"
@@ -155,7 +174,7 @@ export default function PairingScreen({ navigation }) {
               returnKeyType="next"
               accessibilityLabel="URL del servidor MJMovies"
             />
-            <Text style={styles.hint}>IP o dominio de tu servidor MJMovies</Text>
+            <Text style={styles.hint}>Usa la URL del Backend (puerto 5000, ej: http://192.168.1.7:5000)</Text>
           </View>
 
           <View style={styles.inputGroup}>

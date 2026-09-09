@@ -6,8 +6,15 @@ const CACHE_TTL = 300; // 5 minutos
 
 export async function getMovies(req, res, next) {
   try {
-    const { page, limit, search, genre, year, sort, order } = req.query;
+    const { page, limit, search, genre, year, rating, sort, order } = req.query;
     const skip = (page - 1) * limit;
+
+    let yearFilter = undefined;
+    if (year === 'classic') {
+      yearFilter = { lte: 2010 };
+    } else if (year && !isNaN(parseInt(year, 10))) {
+      yearFilter = parseInt(year, 10);
+    }
 
     const where = {
       status: 'READY',
@@ -17,11 +24,12 @@ export async function getMovies(req, res, next) {
           { description: { contains: search } },
         ],
       }),
-      ...(year && { year: parseInt(year) }),
+      ...(yearFilter !== undefined && { year: yearFilter }),
+      ...(rating && { rating: { gte: parseFloat(rating) } }),
       ...(genre && { genres: { some: { genre: { slug: genre } } } }),
     };
 
-    const cacheKey = `movies:list:${JSON.stringify({ page, limit, search, genre, year, sort, order })}`;
+    const cacheKey = `movies:list:${JSON.stringify({ page, limit, search, genre, year, rating, sort, order })}`;
     const cached = await cache.get(cacheKey);
     if (cached) {
       return res.json(cached);
@@ -218,6 +226,16 @@ export async function getWatchHistory(req, res, next) {
     });
 
     res.json({ history });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function clearWatchHistory(req, res, next) {
+  try {
+    const userId = req.user.id;
+    await prisma.watchHistory.deleteMany({ where: { userId } });
+    res.json({ success: true, message: 'Historial eliminado con éxito' });
   } catch (error) {
     next(error);
   }

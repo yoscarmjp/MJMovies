@@ -175,7 +175,6 @@ export default function ExternalMovieView() {
               )}
             </div>
 
-            {/* Puntuación interactiva y cálculo de estrellas */}
             <div className="mb-6 max-w-lg">
               <StarRating
                 movieId={item.id || item.tmdbId || id}

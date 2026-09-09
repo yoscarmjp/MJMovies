@@ -7,11 +7,12 @@ export default function MovieCard({ movie, className = '' }) {
 
   if (!movie) return null
 
-  // Determinar ruta de detalle
-  const movieRoute =
-    movie.tmdbId && !movie.slug
-      ? `/external/${movie.tmdbId}?type=${movie.mediaType || 'movie'}`
-      : `/movie/${movie.id}`
+  const isTv = movie.mediaType === 'tv'
+
+  // Determinar ruta de vista de película / reproductor
+  const movieRoute = isTv
+    ? `/watch/${movie.id || movie.tmdbId}?season=1&episode=1&type=tv`
+    : `/watch/${movie.id || movie.tmdbId}`
 
   // Proxy para TMDB
   const getPosterSrc = () => {
@@ -28,7 +29,6 @@ export default function MovieCard({ movie, className = '' }) {
   }
 
   const posterSrc = getPosterSrc()
-  const isTv = movie.mediaType === 'tv'
 
   // Si no tiene poster o la imagen falló, no debe mostrarse
   if (imageError || !posterSrc) {
@@ -53,10 +53,10 @@ export default function MovieCard({ movie, className = '' }) {
   return (
     <Link
       to={movieRoute}
-      className={`group relative flex flex-col rounded-2xl overflow-hidden bg-surface-1/90 border border-white/10 hover:border-primary/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-primary/20 focus:outline-none ${className}`}
+      data-nav-item="movie"
+      className={`movie-card group relative flex flex-col rounded-sm overflow-hidden bg-surface-1/90 border border-white/10 hover:border-primary/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-primary/20 focus:outline-none ${className}`}
       aria-label={`Ver ${movie.title}`}
     >
-      {/* Poster Image Box */}
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-surface-2">
         <img
           src={posterSrc}
@@ -66,36 +66,32 @@ export default function MovieCard({ movie, className = '' }) {
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
 
-        {/* Top Badges Bar */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10 pointer-events-none">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shadow-md ${badge.color}`}>
+          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-black uppercase tracking-wider shadow-md ${badge.color}`}>
             {badge.label}
           </span>
 
           {movie.rating ? (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-black bg-black/80 backdrop-blur-md text-gold border border-gold/30 shadow-md">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[11px] font-black bg-black/80 backdrop-blur-md text-gold border border-gold/30 shadow-md">
               <Star className="w-3 h-3 fill-gold text-gold" />
               <span>{Number(movie.rating).toFixed(1)}</span>
             </div>
           ) : null}
         </div>
 
-        {/* Format Pill (IMAX / 4K) */}
         <div className="absolute top-8 left-2.5 z-10 pointer-events-none">
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-tight bg-black/60 backdrop-blur-md text-neutral-300 border border-white/10 uppercase">
+          <span className="px-1.5 py-0.5 rounded-sm text-[9px] font-extrabold tracking-tight bg-black/60 backdrop-blur-md text-neutral-300 border border-white/10 uppercase">
             {isTv ? '1080P PRO' : '4K ULTRA HD'}
           </span>
         </div>
 
-        {/* Hover Quick-Play Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
-          <div className="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-glow-primary group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 rounded-sm bg-primary/90 text-white flex items-center justify-center shadow-glow-primary group-hover:scale-110 transition-transform">
             <Play className="w-5 h-5 fill-white translate-x-0.5" />
           </div>
         </div>
       </div>
 
-      {/* Collector Info Footer */}
       <div className="p-3 bg-surface-1/95 flex flex-col justify-between flex-1 border-t border-white/5">
         <div>
           <h3 className="text-xs sm:text-sm font-black text-white truncate tracking-tight group-hover:text-primary transition-colors">

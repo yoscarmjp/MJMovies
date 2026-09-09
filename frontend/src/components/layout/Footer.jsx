@@ -16,20 +16,6 @@ export default function Footer() {
               La experiencia definitiva de streaming en tu hogar. Transmisión nativa de alta fidelidad,
               audio espacial multicanal, transcodificación en tiempo real y catálogo curado de películas y series sin límites.
             </p>
-            <div className="flex items-center gap-3 pt-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[11px] font-bold text-neutral-300">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                <span>4K ULTRA HD</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[11px] font-bold text-neutral-300">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>DOLBY ATMOS</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[11px] font-bold text-neutral-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span>HLS ADAPTIVE</span>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-3">

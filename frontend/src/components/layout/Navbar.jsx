@@ -191,7 +191,6 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-3.5">
-          {/* Desktop Search con Dropdown Flotante en Vivo */}
           <div className="hidden lg:block relative" ref={searchContainerRef}>
             <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <input
@@ -217,7 +216,6 @@ export default function Navbar() {
               </div>
             </form>
 
-            {/* Dropdown flotante en vivo Desktop */}
             {showLiveDropdown && searchQuery.trim().length >= 2 && (
               <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-black/85 border border-white/15 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] p-2 z-50 animate-fade-in">
                 {isSearching && liveResults.length === 0 ? (
@@ -288,7 +286,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile / Tablet Search */}
           <div className="lg:hidden relative">
             {showSearchInput ? (
               <div className="relative">

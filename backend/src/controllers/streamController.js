@@ -85,86 +85,202 @@ export async function getStreamUrl(req, res, next) {
     // Si aún no tenemos tmdbId, usar un ID por defecto para que los servidores funcionen
     const effectiveTmdbId = tmdbId || 27205;
 
+    // Idioma seleccionado (por defecto 'es')
+    const requestedLang = (req.query.lang || 'es').toLowerCase();
+    const isEn = requestedLang.startsWith('en');
+    const langCode = isEn ? 'en' : 'es';
+    const langLabel = isEn ? 'English' : 'Español / Latino';
+
     // Construir servidores de reproducción reales
     let servers = [];
     if (isTv) {
-      servers = [
-        {
-          id: 'server-1',
-          name: 'Servidor 1 (MultiEmbed - Español/Latino)',
-          type: 'embed',
-          url: `https://multiembed.mov/?video_id=${effectiveTmdbId}&tmdb=1&s=${season}&e=${episode}`,
-          quality: '1080p',
-          isRecommended: true,
-        },
-        {
-          id: 'server-2',
-          name: 'Servidor 2 (VidLink - HD Rápido)',
-          type: 'embed',
-          url: `https://vidlink.pro/tv/${effectiveTmdbId}/${season}/${episode}`,
-          quality: '1080p',
-        },
-        {
-          id: 'server-3',
-          name: 'Servidor 3 (VidSrc - Multi-idioma)',
-          type: 'embed',
-          url: `https://vidsrc.cc/v2/embed/tv/${effectiveTmdbId}/${season}/${episode}`,
-          quality: 'HD',
-        },
-        {
-          id: 'server-4',
-          name: 'Servidor 4 (AutoEmbed VIP)',
-          type: 'embed',
-          url: `https://player.autoembed.cc/embed/tv/${effectiveTmdbId}/${season}/${episode}`,
-          quality: '720p/1080p',
-        },
-        {
-          id: 'server-hls',
-          name: 'Servidor 5 (Demo HLS Local)',
-          type: 'hls',
-          url: localStreamPath || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-          quality: 'Demo',
-        },
-      ];
+      if (langCode === 'es') {
+        servers = [
+          {
+            id: 'server-unlimplay',
+            name: 'Servidor 1 (Audio Latino / Español - Recomendado)',
+            type: 'embed',
+            url: `https://unlimplay.com/f/embed/tv/${effectiveTmdbId}/${season}/${episode}`,
+            quality: '1080p',
+            isRecommended: true,
+          },
+          {
+            id: 'server-latino',
+            name: 'Servidor 2 (Latino VIP - Audio Español)',
+            type: 'embed',
+            url: `https://embed69.org/tv/${effectiveTmdbId}/${season}/${episode}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-vix',
+            name: 'Servidor 3 (VixSrc - Multi-Audio / Sub)',
+            type: 'embed',
+            url: `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}?lang=es`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-multiembed',
+            name: 'Servidor 4 (MultiEmbed - Alterno)',
+            type: 'embed',
+            url: `https://multiembed.mov/?video_id=${effectiveTmdbId}&tmdb=1&s=${season}&e=${episode}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-vidlink',
+            name: 'Servidor 5 (VidLink - Sub/Español)',
+            type: 'embed',
+            url: `https://vidlink.pro/tv/${effectiveTmdbId}/${season}/${episode}?sub=es&lang=es&primaryColor=e50914`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-hls',
+            name: 'Servidor 6 (Demo HLS Local)',
+            type: 'hls',
+            url: localStreamPath || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            quality: 'Demo',
+          },
+        ];
+      } else {
+        servers = [
+          {
+            id: 'server-vix',
+            name: 'Servidor 1 (VixSrc - English 1080p)',
+            type: 'embed',
+            url: `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}?lang=en`,
+            quality: '1080p',
+            isRecommended: true,
+          },
+          {
+            id: 'server-multiembed',
+            name: 'Servidor 2 (MultiEmbed - English Original)',
+            type: 'embed',
+            url: `https://multiembed.mov/?video_id=${effectiveTmdbId}&tmdb=1&s=${season}&e=${episode}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-vidlink',
+            name: 'Servidor 3 (VidLink - English HD)',
+            type: 'embed',
+            url: `https://vidlink.pro/tv/${effectiveTmdbId}/${season}/${episode}?primaryColor=e50914`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-unlimplay',
+            name: 'Servidor 4 (UnLimPlay - Multi)',
+            type: 'embed',
+            url: `https://unlimplay.com/f/embed/tv/${effectiveTmdbId}/${season}/${episode}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-latino',
+            name: 'Servidor 5 (Latino VIP)',
+            type: 'embed',
+            url: `https://embed69.org/tv/${effectiveTmdbId}/${season}/${episode}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-hls',
+            name: 'Servidor 6 (Demo HLS Local)',
+            type: 'hls',
+            url: localStreamPath || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            quality: 'Demo',
+          },
+        ];
+      }
     } else {
-      servers = [
-        {
-          id: 'server-1',
-          name: 'Servidor 1 (MultiEmbed - Español/Latino)',
-          type: 'embed',
-          url: `https://multiembed.mov/?video_id=${effectiveTmdbId}&tmdb=1`,
-          quality: '1080p',
-          isRecommended: true,
-        },
-        {
-          id: 'server-2',
-          name: 'Servidor 2 (VidLink - HD Rápido)',
-          type: 'embed',
-          url: `https://vidlink.pro/movie/${effectiveTmdbId}`,
-          quality: '1080p',
-        },
-        {
-          id: 'server-3',
-          name: 'Servidor 3 (VidSrc - Multi-idioma)',
-          type: 'embed',
-          url: `https://vidsrc.cc/v2/embed/movie/${effectiveTmdbId}`,
-          quality: 'HD',
-        },
-        {
-          id: 'server-4',
-          name: 'Servidor 4 (AutoEmbed VIP)',
-          type: 'embed',
-          url: `https://player.autoembed.cc/embed/movie/${effectiveTmdbId}`,
-          quality: '720p/1080p',
-        },
-        {
-          id: 'server-hls',
-          name: 'Servidor 5 (Demo HLS Local)',
-          type: 'hls',
-          url: localStreamPath || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-          quality: 'Demo',
-        },
-      ];
+      if (langCode === 'es') {
+        servers = [
+          {
+            id: 'server-unlimplay',
+            name: 'Servidor 1 (Audio Latino / Español - Recomendado)',
+            type: 'embed',
+            url: `https://unlimplay.com/f/embed/movie/${effectiveTmdbId}`,
+            quality: '1080p',
+            isRecommended: true,
+          },
+          {
+            id: 'server-latino',
+            name: 'Servidor 2 (Latino VIP - Audio Español)',
+            type: 'embed',
+            url: `https://embed69.org/movie/${effectiveTmdbId}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-vix',
+            name: 'Servidor 3 (VixSrc - Multi-Audio / Sub)',
+            type: 'embed',
+            url: `https://vixsrc.to/movie/${effectiveTmdbId}?lang=es`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-multiembed',
+            name: 'Servidor 4 (MultiEmbed - Alterno)',
+            type: 'embed',
+            url: `https://multiembed.mov/?video_id=${effectiveTmdbId}&tmdb=1`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-vidlink',
+            name: 'Servidor 5 (VidLink - Sub/Español)',
+            type: 'embed',
+            url: `https://vidlink.pro/movie/${effectiveTmdbId}?sub=es&lang=es&primaryColor=e50914`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-hls',
+            name: 'Servidor 6 (Demo HLS Local)',
+            type: 'hls',
+            url: localStreamPath || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            quality: 'Demo',
+          },
+        ];
+      } else {
+        servers = [
+          {
+            id: 'server-vix',
+            name: 'Servidor 1 (VixSrc - English 1080p)',
+            type: 'embed',
+            url: `https://vixsrc.to/movie/${effectiveTmdbId}?lang=en`,
+            quality: '1080p',
+            isRecommended: true,
+          },
+          {
+            id: 'server-multiembed',
+            name: 'Servidor 2 (MultiEmbed - English Original)',
+            type: 'embed',
+            url: `https://multiembed.mov/?video_id=${effectiveTmdbId}&tmdb=1`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-vidlink',
+            name: 'Servidor 3 (VidLink - English HD)',
+            type: 'embed',
+            url: `https://vidlink.pro/movie/${effectiveTmdbId}?primaryColor=e50914`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-unlimplay',
+            name: 'Servidor 4 (UnLimPlay - Multi)',
+            type: 'embed',
+            url: `https://unlimplay.com/f/embed/movie/${effectiveTmdbId}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-latino',
+            name: 'Servidor 5 (Latino VIP)',
+            type: 'embed',
+            url: `https://embed69.org/movie/${effectiveTmdbId}`,
+            quality: '1080p',
+          },
+          {
+            id: 'server-hls',
+            name: 'Servidor 6 (Demo HLS Local)',
+            type: 'hls',
+            url: localStreamPath || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            quality: 'Demo',
+          },
+        ];
+      }
     }
 
     res.json({

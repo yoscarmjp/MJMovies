@@ -5,8 +5,8 @@ import { logger } from '../utils/logger.js';
 
 export async function getTrending(req, res, next) {
   try {
-    const { timeWindow = 'week' } = req.query;
-    const data = await movieApi.getTrendingMovies(timeWindow);
+    const { timeWindow = 'week', genre, year, rating, sort } = req.query;
+    const data = await movieApi.getTrendingMovies(timeWindow, { genre, year, rating, sort });
     res.json(data);
   } catch (error) {
     next(error);
@@ -16,7 +16,8 @@ export async function getTrending(req, res, next) {
 export async function getPopular(req, res, next) {
   try {
     const page = parseInt(req.query.page || '1', 10);
-    const data = await movieApi.getPopularMovies(page);
+    const { genre, year, rating, sort } = req.query;
+    const data = await movieApi.getPopularMovies(page, { genre, year, rating, sort });
     res.json(data);
   } catch (error) {
     next(error);
@@ -26,7 +27,8 @@ export async function getPopular(req, res, next) {
 export async function getTopRated(req, res, next) {
   try {
     const page = parseInt(req.query.page || '1', 10);
-    const data = await movieApi.getTopRatedMovies(page);
+    const { genre, year, rating, sort } = req.query;
+    const data = await movieApi.getTopRatedMovies(page, { genre, year, rating, sort });
     res.json(data);
   } catch (error) {
     next(error);
@@ -51,7 +53,8 @@ export async function searchMovies(req, res, next) {
 export async function getPopularSeries(req, res, next) {
   try {
     const page = parseInt(req.query.page || '1', 10);
-    const data = await movieApi.getPopularSeries(page);
+    const { genre, year, rating, sort } = req.query;
+    const data = await movieApi.getPopularSeries(page, { genre, year, rating, sort });
     res.json(data);
   } catch (error) {
     next(error);
@@ -60,8 +63,8 @@ export async function getPopularSeries(req, res, next) {
 
 export async function getTrendingSeries(req, res, next) {
   try {
-    const { timeWindow = 'week' } = req.query;
-    const data = await movieApi.getTrendingSeries(timeWindow);
+    const { timeWindow = 'week', genre, year, rating, sort } = req.query;
+    const data = await movieApi.getTrendingSeries(timeWindow, { genre, year, rating, sort });
     res.json(data);
   } catch (error) {
     next(error);
@@ -71,7 +74,8 @@ export async function getTrendingSeries(req, res, next) {
 export async function getTopRatedSeries(req, res, next) {
   try {
     const page = parseInt(req.query.page || '1', 10);
-    const data = await movieApi.getTopRatedSeries(page);
+    const { genre, year, rating, sort } = req.query;
+    const data = await movieApi.getTopRatedSeries(page, { genre, year, rating, sort });
     res.json(data);
   } catch (error) {
     next(error);

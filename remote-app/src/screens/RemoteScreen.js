@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert,
+  View, Text, TouchableOpacity, StyleSheet, Dimensions, Alert, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -18,6 +18,9 @@ export default function RemoteScreen({ navigation }) {
     isConnected,
     playerState,
   } = useRemoteStore();
+
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     activateKeepAwakeAsync(); // Mantener pantalla encendida mientras el control está abierto
@@ -37,6 +40,26 @@ export default function RemoteScreen({ navigation }) {
     }
   }, [isConnected]);
 
+  // Si está "Buscando TV", reintentar ping periódicamente al servidor
+  useEffect(() => {
+    let interval;
+    if (!tvOnline && isConnected) {
+      const state = useRemoteStore.getState();
+      if (state.socket && state.socket.connected) {
+        interval = setInterval(() => {
+          state.socket.emit('remote:join', {
+            tvSessionId: state.tvSessionId,
+            pairingCode: state.pairingCode,
+          });
+          state.socket.emit('player:getState', { tvSessionId: state.tvSessionId });
+        }, 2000);
+      }
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [tvOnline, isConnected]);
+
   const cmd = useCallback(async (command, payload = {}) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await sendCommand(command, payload);
@@ -54,6 +77,14 @@ export default function RemoteScreen({ navigation }) {
         },
       },
     ]);
+  };
+
+  const handleSendSearch = () => {
+    if (searchQuery.trim()) {
+      cmd('search', { query: searchQuery.trim() });
+      setSearchVisible(false);
+      setSearchQuery('');
+    }
   };
 
   function formatTime(seconds) {
@@ -97,6 +128,35 @@ export default function RemoteScreen({ navigation }) {
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, progress))}%` }]} />
         </View>
+      </View>
+
+      <View style={styles.navBarRow}>
+        <TouchableOpacity
+          style={styles.navBarBtn}
+          onPress={() => cmd('home')}
+          accessibilityLabel="Ir al Inicio"
+        >
+          <Text style={styles.navBarIcon}>🏠</Text>
+          <Text style={styles.navBarLabel}>Inicio</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navBarBtn, styles.searchHighlightBtn]}
+          onPress={() => setSearchVisible(true)}
+          accessibilityLabel="Buscar Película en TV"
+        >
+          <Text style={styles.navBarIcon}>🔍</Text>
+          <Text style={[styles.navBarLabel, { color: '#e50914', fontWeight: 'bold' }]}>Buscar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navBarBtn}
+          onPress={() => cmd('back')}
+          accessibilityLabel="Volver Atrás"
+        >
+          <Text style={styles.navBarIcon}>↩</Text>
+          <Text style={styles.navBarLabel}>Atrás</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.dpad} accessible={true} accessibilityLabel="Control de dirección">
@@ -208,6 +268,50 @@ export default function RemoteScreen({ navigation }) {
           <Text style={styles.secLabel}>Volver</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={searchVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSearchVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.searchModalBox}>
+            <Text style={styles.searchModalTitle}>🔍 Buscar Película en la TV</Text>
+            <Text style={styles.searchModalSubtitle}>Escribe el título para buscarlo directamente en tu pantalla:</Text>
+
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Ej. Inception, Batman, Stranger Things..."
+              placeholderTextColor="#666"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus={true}
+              returnKeyType="search"
+              onSubmitEditing={handleSendSearch}
+            />
+
+            <View style={styles.searchModalActions}>
+              <TouchableOpacity
+                style={styles.cancelSearchBtn}
+                onPress={() => {
+                  setSearchVisible(false);
+                  setSearchQuery('');
+                }}
+              >
+                <Text style={styles.cancelSearchText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.confirmSearchBtn}
+                onPress={handleSendSearch}
+              >
+                <Text style={styles.confirmSearchText}>Buscar en TV</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -354,4 +458,101 @@ const styles = StyleSheet.create({
   },
   secIcon: { fontSize: 18 },
   secLabel: { color: '#9999bb', fontSize: 10, fontWeight: '600' },
+
+  // TV Quick Nav Bar
+  navBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginVertical: 4,
+    width: '90%',
+  },
+  navBarBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#161622',
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  searchHighlightBtn: {
+    backgroundColor: 'rgba(229, 9, 20, 0.15)',
+    borderColor: 'rgba(229, 9, 20, 0.4)',
+  },
+  navBarIcon: { fontSize: 15 },
+  navBarLabel: { color: '#ccc', fontSize: 12, fontWeight: '600' },
+
+  // Search Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  searchModalBox: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#12121a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    padding: 20,
+    gap: 12,
+  },
+  searchModalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  searchModalSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+  },
+  searchInput: {
+    backgroundColor: '#1a1a26',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: '#fff',
+    fontSize: 14,
+  },
+  searchModalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  cancelSearchBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#1f1f2e',
+    alignItems: 'center',
+  },
+  cancelSearchText: {
+    color: '#aaa',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  confirmSearchBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#e50914',
+    alignItems: 'center',
+  },
+  confirmSearchText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
 });

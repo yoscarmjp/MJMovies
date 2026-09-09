@@ -382,7 +382,6 @@ export default function HomeView() {
   return (
     <div className="pb-24 overflow-x-hidden bg-background">
       <section className="relative min-h-[85vh] lg:min-h-[90vh] flex items-center justify-start overflow-hidden pt-20">
-        {/* Cinematic Crossfading Backgrounds (Brighter & Vibrant) */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           {heroList.map((item, idx) => {
             const bg = getBackdropUrl(item) || getPosterUrl(item)
@@ -435,7 +434,6 @@ export default function HomeView() {
                   )}
                 </div>
 
-                {/* Natural, tight title spacing without awkward empty gap */}
                 <h1
                   key={heroItem?.id || heroItem?.tmdbId}
                   className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight uppercase leading-none drop-shadow-2xl font-display line-clamp-2 animate-fade-in"
@@ -519,7 +517,6 @@ export default function HomeView() {
               </div>
             )}
 
-            {/* Carousel Selector: only items with real images */}
             {heroList.length > 1 && (
               <div className="hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-xl p-2 rounded-2xl border border-white/10 shadow-2xl shrink-0 self-end">
                 {heroList.map((item, idx) => {
@@ -818,7 +815,7 @@ export default function HomeView() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-gradient-to-br from-surface-1/90 via-surface-2/60 to-black/90 border border-white/10 p-6 sm:p-10 relative overflow-hidden backdrop-blur-xl shadow-2xl">
+        <section className="rounded-sm bg-gradient-to-br from-surface-1/90 via-surface-2/60 to-black/90 border border-white/10 p-6 sm:p-10 relative overflow-hidden backdrop-blur-xl shadow-2xl">
           <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-20 -top-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -844,7 +841,7 @@ export default function HomeView() {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                <div className="p-3 rounded-sm bg-white/5 border border-white/10 flex items-center gap-2.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-white">Dolby Vision IQ</p>
@@ -852,7 +849,7 @@ export default function HomeView() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                <div className="p-3 rounded-sm bg-white/5 border border-white/10 flex items-center gap-2.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-white">Dolby Atmos 3D</p>
@@ -860,7 +857,7 @@ export default function HomeView() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                <div className="p-3 rounded-sm bg-white/5 border border-white/10 flex items-center gap-2.5">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-white">Lossless Master</p>
@@ -870,13 +867,13 @@ export default function HomeView() {
               </div>
             </div>
 
-            <div className="lg:col-span-5 p-6 rounded-2xl bg-surface-1/90 border border-white/15 shadow-2xl space-y-4 relative">
+            <div className="lg:col-span-5 p-6 rounded-sm bg-surface-1/90 border border-white/15 shadow-2xl space-y-4 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-primary" />
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider">Control Remoto Digital</h3>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <span className="px-2 py-0.5 rounded-xs text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   EN VIVO
                 </span>
               </div>
@@ -899,7 +896,7 @@ export default function HomeView() {
 
               <Link
                 to="/catalog"
-                className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 shadow-glow-primary transition-all hover:scale-102 mt-2"
+                className="w-full py-3 rounded-sm bg-primary hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 shadow-glow-primary transition-all hover:scale-102 mt-2"
               >
                 <MonitorPlay className="w-4 h-4" />
                 <span>Explorar Catálogo en Calidad Máxima</span>

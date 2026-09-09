@@ -318,16 +318,169 @@ async function tmdbFetch(endpoint, params = {}) {
   }
 }
 
+// Mapeo de slugs locales a IDs de género TMDB
+const TMDB_GENRE_MAP_MOVIE = {
+  accion: 28,
+  aventura: 12,
+  animacion: 16,
+  comedia: 35,
+  crimen: 80,
+  documental: 99,
+  drama: 18,
+  fantasia: 14,
+  terror: 27,
+  misterio: 9648,
+  romance: 10749,
+  'ciencia-ficcion': 878,
+  thriller: 53,
+  western: 37,
+  familia: 10751,
+};
+
+const TMDB_GENRE_MAP_TV = {
+  accion: 10759,
+  aventura: 10759,
+  animacion: 16,
+  comedia: 35,
+  crimen: 80,
+  documental: 99,
+  drama: 18,
+  fantasia: 10765,
+  misterio: 9648,
+  'ciencia-ficcion': 10765,
+  western: 37,
+  familia: 10751,
+};
+
+const GENRE_SLUG_TO_NAME = {
+  accion: 'Acción',
+  aventura: 'Aventura',
+  animacion: 'Animación',
+  comedia: 'Comedia',
+  crimen: 'Crimen',
+  documental: 'Documental',
+  drama: 'Drama',
+  fantasia: 'Fantasía',
+  terror: 'Terror',
+  misterio: 'Misterio',
+  romance: 'Romance',
+  'ciencia-ficcion': 'Ciencia Ficción',
+  thriller: 'Thriller',
+  western: 'Western',
+  familia: 'Familia',
+};
+
+function filterFallbackItems(items, { genre, year, rating, sort } = {}, type = 'movie') {
+  let list = [...items];
+
+  if (genre) {
+    const gName = (GENRE_SLUG_TO_NAME[genre] || genre).toLowerCase();
+    list = list.filter((m) =>
+      m.genres?.some((g) => {
+        const str = typeof g === 'string' ? g.toLowerCase() : (g.name || '').toLowerCase();
+        return str.includes(gName) || str.includes(genre.toLowerCase());
+      })
+    );
+  }
+
+  if (year === 'classic') {
+    list = list.filter((m) => {
+      const date = m.release_date || m.first_air_date || '';
+      const y = parseInt(date.split('-')[0], 10);
+      return y && y <= 2010;
+    });
+  } else if (year && !isNaN(parseInt(year, 10))) {
+    const targetY = String(year);
+    list = list.filter((m) => {
+      const date = m.release_date || m.first_air_date || '';
+      return date.startsWith(targetY);
+    });
+  }
+
+  if (rating) {
+    const minR = parseFloat(rating);
+    list = list.filter((m) => (m.vote_average || 0) >= minR);
+  }
+
+  if (sort === 'rating') {
+    list.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+  } else if (sort === 'newest') {
+    list.sort((a, b) => {
+      const da = a.release_date || a.first_air_date || '';
+      const db = b.release_date || b.first_air_date || '';
+      return db.localeCompare(da);
+    });
+  } else if (sort === 'title') {
+    list.sort((a, b) => {
+      const ta = a.title || a.name || '';
+      const tb = b.title || b.name || '';
+      return ta.localeCompare(tb);
+    });
+  }
+
+  return list;
+}
+
 // PELÍCULAS
 
-export async function getPopularMovies(page = 1) {
+export async function getPopularMovies(page = 1, filters = {}) {
+  const { genre, year, rating, sort } = filters;
+  const hasFilters = genre || year || rating || (sort && sort !== 'popular');
+
+  if (hasFilters) {
+    const tmdbParams = { page };
+    if (genre && TMDB_GENRE_MAP_MOVIE[genre]) {
+      tmdbParams.with_genres = TMDB_GENRE_MAP_MOVIE[genre];
+    }
+    if (year === 'classic') {
+      tmdbParams['primary_release_date.lte'] = '2010-12-31';
+    } else if (year && !isNaN(parseInt(year, 10))) {
+      tmdbParams.primary_release_year = year;
+    }
+    if (rating) {
+      tmdbParams['vote_average.gte'] = rating;
+      tmdbParams['vote_count.gte'] = 50;
+    }
+    if (sort === 'rating') {
+      tmdbParams.sort_by = 'vote_average.desc';
+      if (!tmdbParams['vote_count.gte']) tmdbParams['vote_count.gte'] = 80;
+    } else if (sort === 'newest') {
+      tmdbParams.sort_by = 'primary_release_date.desc';
+    } else if (sort === 'title') {
+      tmdbParams.sort_by = 'original_title.asc';
+    } else {
+      tmdbParams.sort_by = 'popularity.desc';
+    }
+
+    const data = await tmdbFetch('/discover/movie', tmdbParams);
+    if (data && data.results) {
+      const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
+      return {
+        page: data.page,
+        totalPages: data.total_pages,
+        totalResults: data.total_results,
+        source: 'tmdb',
+        movies: valid.map((m) => formatItem(m, 'movie')),
+      };
+    }
+
+    const fallbackFiltered = filterFallbackItems(FALLBACK_MOVIES, filters, 'movie');
+    return {
+      page: 1,
+      totalPages: 1,
+      totalResults: fallbackFiltered.length,
+      source: 'local_catalog',
+      movies: fallbackFiltered.map((m) => formatItem(m, 'movie')),
+    };
+  }
+
   const data = await tmdbFetch('/movie/popular', { page });
   if (data && data.results) {
     const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
     return {
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: valid.length,
+      totalResults: data.total_results,
       source: 'tmdb',
       movies: valid.map((m) => formatItem(m, 'movie')),
     };
@@ -342,53 +495,98 @@ export async function getPopularMovies(page = 1) {
   };
 }
 
-export async function getTrendingMovies(timeWindow = 'week') {
+export async function getTrendingMovies(timeWindow = 'week', filters = {}) {
+  const { genre, year, rating, sort } = filters;
+  const hasFilters = genre || year || rating || (sort && sort !== 'popular');
+
+  if (hasFilters) {
+    return getPopularMovies(1, filters);
+  }
+
   const data = await tmdbFetch(`/trending/movie/${timeWindow}`);
   if (data && data.results) {
     const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
     return {
       source: 'tmdb',
+      totalPages: data.total_pages || 1,
+      totalResults: data.total_results || valid.length,
       movies: valid.map((m) => formatItem(m, 'movie')),
     };
   }
 
   return {
     source: 'local_catalog',
+    totalPages: 1,
+    totalResults: FALLBACK_MOVIES.slice(0, 8).length,
     movies: FALLBACK_MOVIES.slice(0, 8).map((m) => formatItem(m, 'movie')),
   };
 }
 
-export async function getTopRatedMovies(page = 1) {
-  const data = await tmdbFetch('/movie/top_rated', { page });
-  if (data && data.results) {
-    const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
-    return {
-      page: data.page,
-      totalPages: data.total_pages,
-      source: 'tmdb',
-      movies: valid.map((m) => formatItem(m, 'movie')),
-    };
-  }
-
-  const sorted = [...FALLBACK_MOVIES].sort((a, b) => b.vote_average - a.vote_average);
-  return {
-    page: 1,
-    totalPages: 1,
-    source: 'local_catalog',
-    movies: sorted.map((m) => formatItem(m, 'movie')),
-  };
+export async function getTopRatedMovies(page = 1, filters = {}) {
+  const effectiveFilters = { ...filters, rating: filters.rating || '8.0', sort: filters.sort || 'rating' };
+  return getPopularMovies(page, effectiveFilters);
 }
 
 // SERIES (TV SHOWS)
 
-export async function getPopularSeries(page = 1) {
+export async function getPopularSeries(page = 1, filters = {}) {
+  const { genre, year, rating, sort } = filters;
+  const hasFilters = genre || year || rating || (sort && sort !== 'popular');
+
+  if (hasFilters) {
+    const tmdbParams = { page };
+    if (genre && TMDB_GENRE_MAP_TV[genre]) {
+      tmdbParams.with_genres = TMDB_GENRE_MAP_TV[genre];
+    }
+    if (year === 'classic') {
+      tmdbParams['first_air_date.lte'] = '2010-12-31';
+    } else if (year && !isNaN(parseInt(year, 10))) {
+      tmdbParams.first_air_date_year = year;
+    }
+    if (rating) {
+      tmdbParams['vote_average.gte'] = rating;
+      tmdbParams['vote_count.gte'] = 20;
+    }
+    if (sort === 'rating') {
+      tmdbParams.sort_by = 'vote_average.desc';
+      if (!tmdbParams['vote_count.gte']) tmdbParams['vote_count.gte'] = 50;
+    } else if (sort === 'newest') {
+      tmdbParams.sort_by = 'first_air_date.desc';
+    } else if (sort === 'title') {
+      tmdbParams.sort_by = 'original_name.asc';
+    } else {
+      tmdbParams.sort_by = 'popularity.desc';
+    }
+
+    const data = await tmdbFetch('/discover/tv', tmdbParams);
+    if (data && data.results) {
+      const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
+      return {
+        page: data.page,
+        totalPages: data.total_pages,
+        totalResults: data.total_results,
+        source: 'tmdb',
+        series: valid.map((s) => formatItem(s, 'tv')),
+      };
+    }
+
+    const fallbackFiltered = filterFallbackItems(FALLBACK_SERIES, filters, 'tv');
+    return {
+      page: 1,
+      totalPages: 1,
+      totalResults: fallbackFiltered.length,
+      source: 'local_catalog',
+      series: fallbackFiltered.map((s) => formatItem(s, 'tv')),
+    };
+  }
+
   const data = await tmdbFetch('/tv/popular', { page });
   if (data && data.results) {
     const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
     return {
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: valid.length,
+      totalResults: data.total_results,
       source: 'tmdb',
       series: valid.map((s) => formatItem(s, 'tv')),
     };
@@ -403,41 +601,36 @@ export async function getPopularSeries(page = 1) {
   };
 }
 
-export async function getTrendingSeries(timeWindow = 'week') {
+export async function getTrendingSeries(timeWindow = 'week', filters = {}) {
+  const { genre, year, rating, sort } = filters;
+  const hasFilters = genre || year || rating || (sort && sort !== 'popular');
+
+  if (hasFilters) {
+    return getPopularSeries(1, filters);
+  }
+
   const data = await tmdbFetch(`/trending/tv/${timeWindow}`);
   if (data && data.results) {
     const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
     return {
       source: 'tmdb',
+      totalPages: data.total_pages || 1,
+      totalResults: data.total_results || valid.length,
       series: valid.map((s) => formatItem(s, 'tv')),
     };
   }
 
   return {
     source: 'local_catalog',
+    totalPages: 1,
+    totalResults: FALLBACK_SERIES.slice(0, 8).length,
     series: FALLBACK_SERIES.slice(0, 8).map((s) => formatItem(s, 'tv')),
   };
 }
 
-export async function getTopRatedSeries(page = 1) {
-  const data = await tmdbFetch('/tv/top_rated', { page });
-  if (data && data.results) {
-    const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
-    return {
-      page: data.page,
-      totalPages: data.total_pages,
-      source: 'tmdb',
-      series: valid.map((s) => formatItem(s, 'tv')),
-    };
-  }
-
-  const sorted = [...FALLBACK_SERIES].sort((a, b) => b.vote_average - a.vote_average);
-  return {
-    page: 1,
-    totalPages: 1,
-    source: 'local_catalog',
-    series: sorted.map((s) => formatItem(s, 'tv')),
-  };
+export async function getTopRatedSeries(page = 1, filters = {}) {
+  const effectiveFilters = { ...filters, rating: filters.rating || '8.0', sort: filters.sort || 'rating' };
+  return getPopularSeries(page, effectiveFilters);
 }
 
 // COMBINADOS (PELÍCULAS + SERIES)

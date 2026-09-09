@@ -62,7 +62,6 @@ export default function StarRating({ movieId, initialRating = 0, title = 'Pelíc
 
       <div className="h-6 w-[1px] bg-white/10 hidden sm:block mx-1" />
 
-      {/* 10 Estrellas Interactivas */}
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => {
           const isFilled = (hoverRating || userRating) >= star

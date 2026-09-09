@@ -6,6 +6,7 @@ import {
   getGenres,
   updateWatchProgress,
   getWatchHistory,
+  clearWatchHistory,
 } from '../controllers/moviesController.js';
 import { authenticate, optionalAuth } from '../middleware/auth.js';
 import { validate, paginationSchema, uuidParamSchema } from '../utils/validators.js';
@@ -36,7 +37,10 @@ router.post(
   updateWatchProgress
 );
 
-// GET /api/movies/history — historial del usuario
+// GET /api/movies/user/history — historial del usuario
 router.get('/user/history', authenticate, getWatchHistory);
+
+// DELETE /api/movies/user/history — limpiar historial del usuario
+router.delete('/user/history', authenticate, clearWatchHistory);
 
 export default router;

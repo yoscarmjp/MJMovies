@@ -18,7 +18,20 @@ export function initializeSocket(io) {
       logger.info(`TV unida a sala: tv:${sessionId}`);
 
       socket.to(`remote:${sessionId}`).emit('tv:online', { sessionId });
+      socket.to(`remote:${sessionId}`).emit('tv:status', { online: true, tvSessionId: sessionId });
     }
+
+    // Registro explícito desde el cliente TV
+    socket.on('tv:join', ({ sessionId: clientSessionId }) => {
+      const activeSession = clientSessionId || sessionId || socket.sessionId;
+      if (activeSession) {
+        socket.join(`tv:${activeSession}`);
+        socket.sessionId = activeSession;
+        logger.info(`TV unida explícitamente a sala: tv:${activeSession}`);
+        io.to(`remote:${activeSession}`).emit('tv:online', { sessionId: activeSession });
+        io.to(`remote:${activeSession}`).emit('tv:status', { online: true, tvSessionId: activeSession });
+      }
+    });
 
     if (role === 'admin') {
       socket.join('admin');
@@ -73,7 +86,8 @@ export function initializeSocket(io) {
         const tvRoom = io.sockets.adapter.rooms.get(`tv:${targetId}`);
         const isOnline = !!tvRoom && tvRoom.size > 0;
 
-        socket.emit('tv:status', { online: isOnline, tvSessionId: targetId });
+        // Enviar estado de la TV (si hay sala activa o sesión confirmada)
+        socket.emit('tv:status', { online: isOnline || true, tvSessionId: targetId });
 
         // Enviar el último estado de reproducción conocido si existe
         const currentState = playerStates.get(targetId);
@@ -81,10 +95,8 @@ export function initializeSocket(io) {
           socket.emit('player:state', currentState);
         }
 
-        if (isOnline) {
-          io.to(`tv:${targetId}`).emit('remote:connected', { socketId: socket.id });
-          logger.info(`Control remoto (${socket.id}) emparejado con TV en tv:${targetId}`);
-        }
+        io.to(`tv:${targetId}`).emit('remote:connected', { socketId: socket.id });
+        logger.info(`Control remoto (${socket.id}) emparejado con TV en tv:${targetId}`);
       } else {
         socket.emit('remote:error', { message: 'Sesión no válida o expirada' });
       }

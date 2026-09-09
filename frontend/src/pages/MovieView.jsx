@@ -177,7 +177,6 @@ export default function MovieView() {
               )}
             </div>
 
-            {/* Puntuación interactiva y cálculo de estrellas */}
             <div className="mb-6 max-w-lg">
               <StarRating
                 movieId={movie.id}

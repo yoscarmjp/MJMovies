@@ -11,6 +11,7 @@ import { useAuthStore } from './stores/authStore';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ToastContainer from './components/ui/ToastContainer';
+import { TvRemoteProvider } from './context/TvRemoteContext';
 
 // Pages
 import HomeView from './pages/HomeView';
@@ -134,78 +135,79 @@ export default function App() {
     };
   }, [initialize]);
 
-  const isPlayerRoute = location.pathname.startsWith('/watch');
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
-  const showNavbar = !isPlayerRoute && !isAdminRoute && !isAuthRoute;
+  const showNavbar = !isAdminRoute && !isAuthRoute;
 
   return (
-    <div className="min-h-screen bg-background text-white selection:bg-primary selection:text-white">
-      <ScrollToTop />
-      {showNavbar && <Navbar />}
+    <TvRemoteProvider>
+      <div className="min-h-screen bg-background text-white selection:bg-primary selection:text-white">
+        <ScrollToTop />
+        {showNavbar && <Navbar />}
 
-      <Routes>
-        <Route path="/" element={<HomeView />} />
-        <Route path="/catalog" element={<CatalogView />} />
-        <Route path="/movie/:id" element={<MovieView />} />
-        <Route path="/external/:id" element={<ExternalMovieView />} />
-        <Route
-          path="/watch/:id"
-          element={
-            <ProtectedRoute>
-              <PlayerView />
-            </ProtectedRoute>
-          }
-        />
+        <Routes>
+          <Route path="/" element={<HomeView />} />
+          <Route path="/catalog" element={<CatalogView />} />
+          <Route path="/movie/:id" element={<MovieView />} />
+          <Route path="/external/:id" element={<ExternalMovieView />} />
+          <Route
+            path="/watch/:id"
+            element={
+              <ProtectedRoute>
+                <PlayerView />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/login"
-          element={
-            <GuestRoute>
-              <LoginView />
-            </GuestRoute>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <GuestRoute>
-              <RegisterView />
-            </GuestRoute>
-          }
-        />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <LoginView />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <RegisterView />
+              </GuestRoute>
+            }
+          />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfileView />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfileView />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminLayout />
-            </AdminRoute>
-          }
-        >
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardView />} />
-          <Route path="movies" element={<MoviesView />} />
-          <Route path="upload" element={<UploadView />} />
-          <Route path="users" element={<UsersView />} />
-          <Route path="jobs" element={<JobsView />} />
-        </Route>
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardView />} />
+            <Route path="movies" element={<MoviesView />} />
+            <Route path="upload" element={<UploadView />} />
+            <Route path="users" element={<UsersView />} />
+            <Route path="jobs" element={<JobsView />} />
+          </Route>
 
-        <Route path="*" element={<NotFoundView />} />
-      </Routes>
+          <Route path="*" element={<NotFoundView />} />
+        </Routes>
 
-      {showNavbar && <Footer />}
+        {showNavbar && <Footer />}
 
-      <ToastContainer />
-    </div>
+        <ToastContainer />
+      </div>
+    </TvRemoteProvider>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import MovieCard from '../components/movies/MovieCard'
-import { Search, SlidersHorizontal, Film, Tv, LayoutGrid } from 'lucide-react'
+import { Search, SlidersHorizontal, Film, Tv, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function CatalogView() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -196,9 +196,10 @@ export default function CatalogView() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-4 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 disabled:opacity-30 text-xs font-bold text-white border border-white/10 transition-colors"
+            className="px-4 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 disabled:opacity-30 text-xs font-bold text-white border border-white/10 transition-colors flex items-center gap-1.5"
           >
-            ← Anterior
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Anterior</span>
           </button>
           <span className="text-xs font-semibold text-neutral-400">
             Página {page} de {totalPages}
@@ -206,9 +207,10 @@ export default function CatalogView() {
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-4 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 disabled:opacity-30 text-xs font-bold text-white border border-white/10 transition-colors"
+            className="px-4 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 disabled:opacity-30 text-xs font-bold text-white border border-white/10 transition-colors flex items-center gap-1.5"
           >
-            Siguiente →
+            <span>Siguiente</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       )}

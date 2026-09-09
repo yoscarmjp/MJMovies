@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import api from '../../services/api';
-import { RotateCw, Cpu } from 'lucide-react';
+import { RotateCw, Cpu, AlertTriangle } from 'lucide-react';
 
 export default function JobsView() {
   const [jobs, setJobs] = useState([]);
@@ -230,10 +230,11 @@ export default function JobsView() {
                     <td className="py-3.5 px-4">
                       {job.errorMsg ? (
                         <span
-                          className="text-xs text-red-400 font-mono truncate block max-w-[200px]"
+                          className="text-xs text-red-400 font-mono truncate flex items-center gap-1.5 max-w-[200px]"
                           title={job.errorMsg}
                         >
-                          ⚠ {job.errorMsg}
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                          <span className="truncate">{job.errorMsg}</span>
                         </span>
                       ) : (
                         <span className="text-gray-600 text-xs">–</span>

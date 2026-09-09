@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Play, Star, Film, Tv } from 'lucide-react'
+import { Play, Star, Film, Tv, Sparkles } from 'lucide-react'
 
 export default function MovieCard({ movie, className = '' }) {
   const [imageError, setImageError] = useState(false)
@@ -52,12 +52,14 @@ export default function MovieCard({ movie, className = '' }) {
       )}
 
       {isTv ? (
-        <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-indigo-600/90 backdrop-blur-md text-white border border-indigo-400/30">
-          📺 SERIE
+        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-indigo-600/90 backdrop-blur-md text-white border border-indigo-400/30">
+          <Tv className="w-3 h-3" />
+          <span>SERIE</span>
         </div>
       ) : movie.featured ? (
-        <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary/90 backdrop-blur-md text-white border border-primary/30">
-          ⭐ DESTACADA
+        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary/90 backdrop-blur-md text-white border border-primary/30">
+          <Sparkles className="w-3 h-3 text-amber-300" />
+          <span>DESTACADA</span>
         </div>
       ) : null}
 

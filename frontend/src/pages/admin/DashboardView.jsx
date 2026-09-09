@@ -167,8 +167,9 @@ export default function DashboardView() {
       <div className="p-6 rounded-2xl bg-surface-1/60 border border-white/10 backdrop-blur-md">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">Trabajos Recientes</h2>
-          <Link to="/admin/jobs" className="text-xs text-primary font-semibold hover:underline">
-            Ver todos los jobs →
+          <Link to="/admin/jobs" className="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
+            <span>Ver todos los jobs</span>
+            <ArrowRight size={13} />
           </Link>
         </div>
 

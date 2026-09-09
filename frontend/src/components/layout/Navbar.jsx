@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
-import { Search, Film, Tv, User, Shield, LogOut, Menu, X } from 'lucide-react'
+import { Search, User, Shield, LogOut, Menu, X } from 'lucide-react'
+import Logo from '../../assets/img/mjmovies.webp'
 
 export default function Navbar() {
   const { user, isLoggedIn, isAdmin, logout } = useAuthStore()
@@ -73,11 +74,10 @@ export default function Navbar() {
           : 'bg-gradient-to-b from-black/80 via-black/40 to-transparent py-4'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mt-4 mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-1 text-2xl font-black tracking-tight text-white group">
-            <span className="text-primary group-hover:text-primary-hover transition-colors">MJ</span>
-            <span>MOVIES</span>
+            <img className='max-w-48' src={Logo} alt="" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -98,7 +98,7 @@ export default function Navbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex  items-center gap-4">
           <div className="relative">
             {showSearchInput ? (
               <form onSubmit={handleSearchSubmit} className="flex items-center">
@@ -116,7 +116,7 @@ export default function Navbar() {
                   onClick={() => setShowSearchInput(false)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs"
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </form>
             ) : (

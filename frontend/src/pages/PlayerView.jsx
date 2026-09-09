@@ -20,6 +20,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  AlertTriangle,
 } from 'lucide-react'
 
 export default function PlayerView() {
@@ -357,7 +359,7 @@ export default function PlayerView() {
   if (error || !movie) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white z-50 p-4 text-center">
-        <div className="text-5xl mb-4">⚠</div>
+        <AlertTriangle className="w-14 h-14 text-amber-400 mb-4 mx-auto" />
         <h2 className="text-xl font-bold mb-3">{error}</h2>
         <button
           onClick={() => navigate('/catalog')}
@@ -422,7 +424,7 @@ export default function PlayerView() {
               <span className="hidden sm:inline">
                 {activeServer?.name?.split('(')[0]?.trim() || 'Servidor'}
               </span>
-              <span className="text-neutral-400">▾</span>
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
             </button>
 
             {showServerMenu && (

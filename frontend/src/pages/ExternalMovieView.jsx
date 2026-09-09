@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import { Play, Star, Calendar, Clock, ArrowLeft, Film } from 'lucide-react'
+import { Play, Star, Calendar, Clock, ArrowLeft, Film, Tv, Layers, ChevronRight } from 'lucide-react'
 
 export default function ExternalMovieView() {
   const { id } = useParams()
@@ -69,7 +69,7 @@ export default function ExternalMovieView() {
   if (error || !item) {
     return (
       <div className="max-w-xl mx-auto px-4 pt-44 pb-24 text-center">
-        <div className="text-5xl mb-4">🎬</div>
+        <Film className="w-14 h-14 text-neutral-500 mx-auto mb-4 opacity-50" />
         <h2 className="text-2xl font-bold text-white mb-2">{error || 'Contenido no encontrado'}</h2>
         <Link to="/" className="inline-block mt-4 px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-sm shadow-glow-primary">
           Volver al inicio
@@ -124,9 +124,10 @@ export default function ExternalMovieView() {
 
           <div>
             <div className="flex flex-wrap gap-2 mb-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isTv ? 'bg-indigo-600 text-white' : 'bg-primary text-white'
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isTv ? 'bg-indigo-600 text-white' : 'bg-primary text-white'
                 }`}>
-                {isTv ? '📺 Serie' : 'Película'}
+                {isTv ? <Tv className="w-3.5 h-3.5" /> : <Film className="w-3.5 h-3.5" />}
+                <span>{isTv ? 'Serie' : 'Película'}</span>
               </span>
 
               {item.genres?.map((g) => {
@@ -142,7 +143,7 @@ export default function ExternalMovieView() {
               })}
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-3">
               {item.title}
             </h1>
 
@@ -166,8 +167,9 @@ export default function ExternalMovieView() {
                 </div>
               )}
               {isTv && (
-                <div className="flex items-center gap-1 bg-surface-2 px-2.5 py-1 rounded-md border border-white/5">
-                  <span>📋 {seasonsCount} temporada{seasonsCount > 1 ? 's' : ''}</span>
+                <div className="flex items-center gap-1.5 bg-surface-2 px-2.5 py-1 rounded-md border border-white/5">
+                  <Layers className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>{seasonsCount} temporada{seasonsCount > 1 ? 's' : ''}</span>
                 </div>
               )}
             </div>
@@ -197,14 +199,17 @@ export default function ExternalMovieView() {
                 className="px-7 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm flex items-center gap-2 shadow-glow-primary transition-all hover:scale-105"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>{isTv ? '▶ Ver Temporada 1, Ep. 1' : '▶ Reproducir Película'}</span>
+                <span>{isTv ? 'Ver Temporada 1, Ep. 1' : 'Reproducir Película'}</span>
               </Link>
             </div>
 
             {isTv && (
               <div className="pt-8 border-t border-white/10">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-black text-white">📋 Temporadas y Capítulos</h2>
+                  <h2 className="text-2xl font-black text-white flex items-center gap-2.5">
+                    <Layers className="w-6 h-6 text-primary" />
+                    <span>Temporadas y Capítulos</span>
+                  </h2>
                   <span className="text-xs text-neutral-400 font-semibold">{episodes.length} capítulos</span>
                 </div>
 
@@ -259,9 +264,15 @@ export default function ExternalMovieView() {
                         </div>
 
                         <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 text-xs text-neutral-400 font-medium">
-                          {ep.runtime && <span>⏱ {ep.runtime} min</span>}
-                          <span className="text-primary font-bold group-hover:translate-x-1 transition-transform">
-                            Ver en HD →
+                          {ep.runtime && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                              {ep.runtime} min
+                            </span>
+                          )}
+                          <span className="text-primary font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                            <span>Ver en HD</span>
+                            <ChevronRight className="w-4 h-4" />
                           </span>
                         </div>
                       </Link>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import api from '../services/api'
 import MovieCard from '../components/movies/MovieCard'
-import { Play, Info, Star, ChevronRight } from 'lucide-react'
+import { Play, Info, Star, ChevronRight, Tv, Sparkles, FolderHeart, Flame, Award, Clock } from 'lucide-react'
 
 export default function HomeView() {
   const { isLoggedIn } = useAuthStore()
@@ -134,8 +134,18 @@ export default function HomeView() {
           {heroItem ? (
             <div className="max-w-2xl animate-fade-in">
               <div className="flex items-center gap-3 mb-4 flex-wrap">
-                <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary text-white shadow-glow-primary">
-                  {heroItem.mediaType === 'tv' ? '📺 Serie' : 'Destacada'}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary text-white shadow-glow-primary">
+                  {heroItem.mediaType === 'tv' ? (
+                    <>
+                      <Tv className="w-3.5 h-3.5" />
+                      <span>Serie</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Destacada</span>
+                    </>
+                  )}
                 </span>
                 {(heroItem.year || heroItem.releaseDate) && (
                   <span className="text-xs font-semibold text-neutral-300">
@@ -194,7 +204,10 @@ export default function HomeView() {
         {isLoggedIn && watchHistory.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Continuar viendo</h2>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                <span>Continuar viendo</span>
+              </h2>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {watchHistory.map((item) => (
@@ -208,7 +221,8 @@ export default function HomeView() {
           <section>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span>📁 Mi Biblioteca</span>
+                <FolderHeart className="w-5 h-5 text-primary" />
+                <span>Mi Biblioteca</span>
               </h2>
               <Link to="/catalog" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
                 <span>Ver todo</span>
@@ -226,7 +240,8 @@ export default function HomeView() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>🔥 Películas en Tendencia</span>
+              <Flame className="w-5 h-5 text-primary" />
+              <span>Películas en Tendencia</span>
             </h2>
             <Link to="/catalog?type=movie" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
               <span>Ver todas</span>
@@ -251,7 +266,8 @@ export default function HomeView() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>📺 Series en Tendencia</span>
+              <Tv className="w-5 h-5 text-primary" />
+              <span>Series en Tendencia</span>
             </h2>
             <Link to="/catalog?type=tv" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
               <span>Ver todas</span>
@@ -276,7 +292,8 @@ export default function HomeView() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>⭐ Películas Mejor Calificadas</span>
+              <Star className="w-5 h-5 text-gold fill-gold" />
+              <span>Películas Mejor Calificadas</span>
             </h2>
           </div>
           {loadingExternal ? (
@@ -297,7 +314,8 @@ export default function HomeView() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span>🏆 Series Aclamadas por la Crítica</span>
+              <Award className="w-5 h-5 text-amber-400" />
+              <span>Series Aclamadas por la Crítica</span>
             </h2>
           </div>
           {loadingExternal ? (

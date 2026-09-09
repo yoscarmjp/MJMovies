@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
-import { Search, Plus, RotateCw, ExternalLink, Trash2, Film, AlertTriangle } from 'lucide-react';
+import { Search, Plus, RotateCw, ExternalLink, Trash2, Film, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function MoviesView() {
   const { success: toastSuccess, error: toastError } = useToastStore();
@@ -191,8 +191,8 @@ export default function MoviesView() {
                             className="w-9 h-13 object-cover rounded shadow-md shrink-0"
                           />
                         ) : (
-                          <div className="w-9 h-13 bg-surface-3 rounded flex items-center justify-center text-gray-500 text-xs shrink-0">
-                            🎬
+                          <div className="w-9 h-13 bg-surface-3 rounded flex items-center justify-center text-gray-500 shrink-0">
+                            <Film size={16} className="opacity-60" />
                           </div>
                         )}
                         <div className="min-w-0 max-w-[200px]">
@@ -273,9 +273,10 @@ export default function MoviesView() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 rounded-xl bg-surface-1 border border-white/10 text-sm font-semibold text-gray-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-2 rounded-xl bg-surface-1 border border-white/10 text-sm font-semibold text-gray-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
           >
-            ← Anterior
+            <ChevronLeft size={16} />
+            <span>Anterior</span>
           </button>
           <span className="text-sm text-gray-400">
             Página <strong className="text-white">{page}</strong> de {totalPages}
@@ -283,9 +284,10 @@ export default function MoviesView() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 rounded-xl bg-surface-1 border border-white/10 text-sm font-semibold text-gray-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-2 rounded-xl bg-surface-1 border border-white/10 text-sm font-semibold text-gray-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
           >
-            Siguiente →
+            <span>Siguiente</span>
+            <ChevronRight size={16} />
           </button>
         </div>
       )}

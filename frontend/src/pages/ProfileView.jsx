@@ -142,8 +142,8 @@ export default function ProfileView() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl text-gray-600">
-                          🎬
+                        <div className="w-full h-full flex items-center justify-center bg-surface-3">
+                          <Film size={22} className="text-gray-500 opacity-60" />
                         </div>
                       )}
                       <div className="absolute bottom-0 left-0 w-full h-1 bg-black/60">

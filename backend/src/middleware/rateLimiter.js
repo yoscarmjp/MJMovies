@@ -44,10 +44,10 @@ function createLimiter({
 }
 
 export const rateLimiter = {
-  // Auth: límite estricto para prevenir brute force
+  // Auth: límite estricto para prevenir brute force (relajado en dev)
   auth: createLimiter({
     windowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000'),
-    max: parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5'),
+    max: process.env.NODE_ENV === 'production' ? parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5') : 100,
     message: 'Demasiados intentos de autenticación. Espera 15 minutos.',
     keyPrefix: 'auth',
     skipSuccessfulRequests: true,

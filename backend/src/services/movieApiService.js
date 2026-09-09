@@ -45,7 +45,7 @@ const FALLBACK_MOVIES = [
     release_date: '2008-07-16',
     vote_average: 8.5,
     poster_path: '/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
-    backdrop_path: '/dqK9Hag1054tghRQSqLSPoY2fgn.jpg',
+    backdrop_path: '/nMKdUUepR0i5zn0y1T4CsSB5chy.jpg',
     genres: ['Acción', 'Crimen', 'Drama'],
     runtime: 152,
     director: 'Christopher Nolan',
@@ -59,7 +59,7 @@ const FALLBACK_MOVIES = [
     overview: 'El todopoderoso Thanos ha despertado con la promesa de arrasar con todo a su paso, portando el Guantelete del Infinito, que le confiere un poder incalculable.',
     release_date: '2018-04-25',
     vote_average: 8.3,
-    poster_path: '/mGJuQJ3eC73XmS74w56m7W0p0mH.jpg',
+    poster_path: '/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg',
     backdrop_path: '/bOGkgRGdhrBYJSLpXaxhXVstNsV.jpg',
     genres: ['Acción', 'Aventura', 'Ciencia Ficción'],
     runtime: 149,
@@ -90,7 +90,7 @@ const FALLBACK_MOVIES = [
     release_date: '1999-03-30',
     vote_average: 8.2,
     poster_path: '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg',
-    backdrop_path: '/7u3DUTNuLhvJRlZ9qn5gqMxgf8w.jpg',
+    backdrop_path: '/l4QHerTSbflqI8mbtx4f04qG7y0.jpg',
     genres: ['Acción', 'Ciencia Ficción'],
     runtime: 136,
     director: 'Lilly Wachowski, Lana Wachowski',
@@ -323,12 +323,13 @@ async function tmdbFetch(endpoint, params = {}) {
 export async function getPopularMovies(page = 1) {
   const data = await tmdbFetch('/movie/popular', { page });
   if (data && data.results) {
+    const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
     return {
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: valid.length,
       source: 'tmdb',
-      movies: data.results.map((m) => formatItem(m, 'movie')),
+      movies: valid.map((m) => formatItem(m, 'movie')),
     };
   }
 
@@ -344,9 +345,10 @@ export async function getPopularMovies(page = 1) {
 export async function getTrendingMovies(timeWindow = 'week') {
   const data = await tmdbFetch(`/trending/movie/${timeWindow}`);
   if (data && data.results) {
+    const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
     return {
       source: 'tmdb',
-      movies: data.results.map((m) => formatItem(m, 'movie')),
+      movies: valid.map((m) => formatItem(m, 'movie')),
     };
   }
 
@@ -359,11 +361,12 @@ export async function getTrendingMovies(timeWindow = 'week') {
 export async function getTopRatedMovies(page = 1) {
   const data = await tmdbFetch('/movie/top_rated', { page });
   if (data && data.results) {
+    const valid = data.results.filter((m) => m.poster_path || m.backdrop_path);
     return {
       page: data.page,
       totalPages: data.total_pages,
       source: 'tmdb',
-      movies: data.results.map((m) => formatItem(m, 'movie')),
+      movies: valid.map((m) => formatItem(m, 'movie')),
     };
   }
 
@@ -381,12 +384,13 @@ export async function getTopRatedMovies(page = 1) {
 export async function getPopularSeries(page = 1) {
   const data = await tmdbFetch('/tv/popular', { page });
   if (data && data.results) {
+    const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
     return {
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: valid.length,
       source: 'tmdb',
-      series: data.results.map((s) => formatItem(s, 'tv')),
+      series: valid.map((s) => formatItem(s, 'tv')),
     };
   }
 
@@ -402,9 +406,10 @@ export async function getPopularSeries(page = 1) {
 export async function getTrendingSeries(timeWindow = 'week') {
   const data = await tmdbFetch(`/trending/tv/${timeWindow}`);
   if (data && data.results) {
+    const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
     return {
       source: 'tmdb',
-      series: data.results.map((s) => formatItem(s, 'tv')),
+      series: valid.map((s) => formatItem(s, 'tv')),
     };
   }
 
@@ -417,11 +422,12 @@ export async function getTrendingSeries(timeWindow = 'week') {
 export async function getTopRatedSeries(page = 1) {
   const data = await tmdbFetch('/tv/top_rated', { page });
   if (data && data.results) {
+    const valid = data.results.filter((s) => s.poster_path || s.backdrop_path);
     return {
       page: data.page,
       totalPages: data.total_pages,
       source: 'tmdb',
-      series: data.results.map((s) => formatItem(s, 'tv')),
+      series: valid.map((s) => formatItem(s, 'tv')),
     };
   }
 
@@ -439,9 +445,10 @@ export async function getTopRatedSeries(page = 1) {
 export async function getTrendingAll(timeWindow = 'week') {
   const data = await tmdbFetch(`/trending/all/${timeWindow}`);
   if (data && data.results) {
+    const valid = data.results.filter((item) => item.poster_path || item.backdrop_path);
     return {
       source: 'tmdb',
-      items: data.results.map((item) => formatItem(item, item.media_type || 'movie')),
+      items: valid.map((item) => formatItem(item, item.media_type || 'movie')),
     };
   }
 
@@ -460,7 +467,9 @@ export async function searchAll(query, page = 1) {
 
   const data = await tmdbFetch('/search/multi', { query, page });
   if (data && data.results) {
-    const valid = data.results.filter((x) => x.media_type === 'movie' || x.media_type === 'tv');
+    const valid = data.results.filter(
+      (x) => (x.media_type === 'movie' || x.media_type === 'tv') && (x.poster_path || x.backdrop_path)
+    );
     return {
       page: data.page,
       totalPages: data.total_pages,

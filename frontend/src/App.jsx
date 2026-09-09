@@ -136,7 +136,8 @@ export default function App() {
 
   const isPlayerRoute = location.pathname.startsWith('/watch');
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const showNavbar = !isPlayerRoute && !isAdminRoute;
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register';
+  const showNavbar = !isPlayerRoute && !isAdminRoute && !isAuthRoute;
 
   return (
     <div className="min-h-screen bg-background text-white selection:bg-primary selection:text-white">

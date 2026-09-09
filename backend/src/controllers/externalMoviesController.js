@@ -186,28 +186,10 @@ export async function seedSeries(req, res, next) {
 }
 
 export async function proxyImage(req, res) {
-  const fallbackSvg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="500" height="750" viewBox="0 0 500 750">
-      <defs>
-        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#1a1a24;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#0f0f14;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      <rect width="500" height="750" fill="url(#grad)" />
-      <circle cx="250" cy="340" r="60" fill="rgba(229,9,20,0.15)" />
-      <text x="250" y="360" font-size="56" text-anchor="middle" fill="#e50914" font-family="sans-serif">🎬</text>
-      <text x="250" y="440" font-size="24" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-weight="bold">MJMovies</text>
-      <text x="250" y="475" font-size="14" text-anchor="middle" fill="#888899" font-family="sans-serif">Poster no disponible</text>
-    </svg>
-  `.trim();
-
   try {
     const { url } = req.query;
     if (!url || !url.startsWith('http')) {
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.send(fallbackSvg);
+      return res.status(404).send('Image URL required');
     }
 
     const response = await fetch(url, {
@@ -217,10 +199,7 @@ export async function proxyImage(req, res) {
     });
 
     if (!response.ok) {
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-      return res.send(fallbackSvg);
+      return res.status(404).send('Image not found on remote server');
     }
 
     const contentType = response.headers.get('content-type') || 'image/jpeg';
@@ -231,8 +210,6 @@ export async function proxyImage(req, res) {
     const buffer = await response.arrayBuffer();
     res.send(Buffer.from(buffer));
   } catch (error) {
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.send(fallbackSvg);
+    res.status(404).send('Failed to fetch image');
   }
 }

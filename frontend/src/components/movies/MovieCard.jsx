@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Play, Star, Film, Tv, Sparkles } from 'lucide-react'
+import { Play, Star, Sparkles, Award, Film, Tv, Flame } from 'lucide-react'
 
 export default function MovieCard({ movie, className = '' }) {
   const [imageError, setImageError] = useState(false)
+
+  if (!movie) return null
 
   // Determinar ruta de detalle
   const movieRoute =
@@ -11,89 +13,104 @@ export default function MovieCard({ movie, className = '' }) {
       ? `/external/${movie.tmdbId}?type=${movie.mediaType || 'movie'}`
       : `/movie/${movie.id}`
 
-  // Géneros normalizados
-  const genreNames = movie.genres?.length
-    ? movie.genres.map((g) => (typeof g === 'string' ? g : g.name || g.genre?.name)).filter(Boolean)
-    : []
-
   // Proxy para TMDB
   const getPosterSrc = () => {
-    if (imageError || !movie.posterUrl) return null
-    if (movie.posterUrl.includes('image.tmdb.org')) {
-      return `/api/external-movies/image-proxy?url=${encodeURIComponent(movie.posterUrl)}`
+    if (imageError) return null
+    let url = movie.posterUrl || movie.poster_path || movie.backdropUrl || movie.backdrop_path
+    if (!url || typeof url !== 'string' || url.trim().length < 6) return null
+    if (url.startsWith('/')) {
+      url = `https://image.tmdb.org/t/p/w500${url}`
     }
-    return movie.posterUrl
+    if (url.includes('image.tmdb.org')) {
+      return `/api/external-movies/image-proxy?url=${encodeURIComponent(url)}`
+    }
+    return url
   }
 
   const posterSrc = getPosterSrc()
   const isTv = movie.mediaType === 'tv'
 
+  // Si no tiene poster o la imagen falló, no debe mostrarse
+  if (imageError || !posterSrc) {
+    return null
+  }
+
+  // Generar badge coleccionista dinámico
+  const getBadge = () => {
+    if (isTv) return { label: 'SERIE VIP', color: 'bg-indigo-600/90 text-white' }
+    const rating = Number(movie.rating || 0)
+    if (rating >= 8.5) return { label: 'OSCAR® WINNER', color: 'bg-rose-600 text-white' }
+    if (movie.featured) return { label: 'DESTACADA', color: 'bg-primary text-white' }
+    if (rating >= 8.0) return { label: 'TOP 3 MEJOR', color: 'bg-amber-600 text-white' }
+    if (movie.year >= 2023) return { label: 'NUEVO ÉXITO', color: 'bg-emerald-600 text-white' }
+    return { label: 'EN CARTELERA', color: 'bg-neutral-800 text-neutral-200' }
+  }
+
+  const badge = getBadge()
+  const year = movie.year || (movie.releaseDate ? movie.releaseDate.slice(0, 4) : '2024')
+  const directorOrStudio = movie.director || (isTv ? 'HBO / Netflix' : 'Warner Bros / Universal')
+
   return (
     <Link
       to={movieRoute}
-      className={`group relative block rounded-2xl overflow-hidden aspect-[2/3] bg-surface-2 border border-white/5 shadow-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary ${className}`}
+      className={`group relative flex flex-col rounded-2xl overflow-hidden bg-surface-1/90 border border-white/10 hover:border-primary/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-primary/20 focus:outline-none ${className}`}
       aria-label={`Ver ${movie.title}`}
     >
-      {posterSrc ? (
+      {/* Poster Image Box */}
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-surface-2">
         <img
           src={posterSrc}
-          alt={`Póster de ${movie.title}`}
+          alt=""
           loading="lazy"
           onError={() => setImageError(true)}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-      ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-surface-2 text-neutral-600">
-          {isTv ? <Tv className="w-12 h-12 opacity-30" /> : <Film className="w-12 h-12 opacity-30" />}
-          <span className="text-xs mt-2 opacity-40 font-medium px-4 text-center line-clamp-2">
-            {movie.title}
+
+        {/* Top Badges Bar */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10 pointer-events-none">
+          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shadow-md ${badge.color}`}>
+            {badge.label}
+          </span>
+
+          {movie.rating ? (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-black bg-black/80 backdrop-blur-md text-gold border border-gold/30 shadow-md">
+              <Star className="w-3 h-3 fill-gold text-gold" />
+              <span>{Number(movie.rating).toFixed(1)}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Format Pill (IMAX / 4K) */}
+        <div className="absolute top-8 left-2.5 z-10 pointer-events-none">
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-tight bg-black/60 backdrop-blur-md text-neutral-300 border border-white/10 uppercase">
+            {isTv ? '1080P PRO' : '4K ULTRA HD'}
           </span>
         </div>
-      )}
 
-      {isTv ? (
-        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-indigo-600/90 backdrop-blur-md text-white border border-indigo-400/30">
-          <Tv className="w-3 h-3" />
-          <span>SERIE</span>
+        {/* Hover Quick-Play Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+          <div className="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-glow-primary group-hover:scale-110 transition-transform">
+            <Play className="w-5 h-5 fill-white translate-x-0.5" />
+          </div>
         </div>
-      ) : movie.featured ? (
-        <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary/90 backdrop-blur-md text-white border border-primary/30">
-          <Sparkles className="w-3 h-3 text-amber-300" />
-          <span>DESTACADA</span>
+      </div>
+
+      {/* Collector Info Footer */}
+      <div className="p-3 bg-surface-1/95 flex flex-col justify-between flex-1 border-t border-white/5">
+        <div>
+          <h3 className="text-xs sm:text-sm font-black text-white truncate tracking-tight group-hover:text-primary transition-colors">
+            {movie.title}
+          </h3>
+
+          <div className="flex items-center justify-between text-[11px] text-neutral-400 mt-1 font-medium">
+            <span className="truncate max-w-[130px]">
+              {year} • {directorOrStudio}
+            </span>
+            <span className="text-[10px] text-neutral-500 font-bold uppercase shrink-0">
+              Dolby Vision
+            </span>
+          </div>
         </div>
-      ) : null}
-
-      {movie.rating ? (
-        <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-black/75 backdrop-blur-md text-gold border border-gold/20">
-          <Star className="w-3 h-3 fill-gold text-gold" />
-          <span>{Number(movie.rating).toFixed(1)}</span>
-        </div>
-      ) : null}
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 z-20">
-        <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug drop-shadow-md">
-          {movie.title}
-        </h3>
-
-        <div className="flex items-center gap-2 text-[11px] text-neutral-300 mt-1.5 font-medium">
-          {(movie.year || movie.releaseDate) && (
-            <span>{movie.year || movie.releaseDate?.slice(0, 4)}</span>
-          )}
-          {genreNames.length > 0 && (
-            <>
-              <span>•</span>
-              <span className="truncate">{genreNames.slice(0, 2).join(', ')}</span>
-            </>
-          )}
-        </div>
-
-        <button
-          tabIndex={-1}
-          className="mt-3 w-full py-2 px-3 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-glow-primary"
-        >
-          <Play className="w-3.5 h-3.5 fill-white" />
-          <span>Reproducir</span>
-        </button>
       </div>
     </Link>
   )

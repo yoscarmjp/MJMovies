@@ -104,19 +104,16 @@ export default function HomeView() {
       }
     }
 
-    // 3. Cargar historial si está logueado
+    // 3. Cargar historial (local y backend)
     const loadHistory = async () => {
-      if (!isLoggedIn) {
-        setWatchHistory([])
-        return
-      }
-
       try {
         let backendItems = []
-        try {
-          const res = await api.get('/movies/user/history')
-          backendItems = res.data.history || []
-        } catch {}
+        if (isLoggedIn) {
+          try {
+            const res = await api.get('/movies/user/history')
+            backendItems = res.data.history || []
+          } catch {}
+        }
 
         let localItems = []
         try {
@@ -126,13 +123,14 @@ export default function HomeView() {
 
         const map = new Map()
 
-        // 1. Local items
+        // 1. Local items (solo con posición válida >= 15s)
         localItems.forEach((item) => {
           const key = item.movieId || item.id
-          if (key) {
+          const pos = Number(item.position) || 0
+          if (key && pos >= 15) {
             map.set(key, {
               movieId: key,
-              position: item.position || 0,
+              position: pos,
               duration: item.duration || 5400,
               updatedAt: item.updatedAt || new Date().toISOString(),
               season: item.season,
@@ -149,15 +147,17 @@ export default function HomeView() {
           }
         })
 
-        // 2. Backend items (merge with local)
+        // 2. Backend items (merge con local)
         backendItems.forEach((item) => {
           const key = item.movieId || item.movie?.id
-          if (key) {
+          const pos = Number(item.position) || 0
+          if (key && pos >= 15) {
             const existing = map.get(key)
             if (!existing || new Date(item.updatedAt) >= new Date(existing.updatedAt)) {
               map.set(key, {
                 ...item,
                 movieId: key,
+                position: pos,
                 duration: item.movie?.duration || item.duration || 5400,
               })
             }
@@ -179,18 +179,46 @@ export default function HomeView() {
     loadHistory()
   }, [isLoggedIn])
 
-  // Build hero items list (top 4 items for multi-slide carousel)
+  // Helper para descartar elementos sin portada válida
+  const hasValidPoster = (item) => {
+    if (!item) return false
+    const url = item.backdropUrl || item.posterUrl || item.backdrop_path || item.poster_path
+    if (!url || typeof url !== 'string') return false
+    const clean = url.trim()
+    if (clean.length < 6) return false
+    if (clean.includes('dqK9Hag1054tghRQSqLSPoY2fgn') || clean.includes('7u3DUTNuLhvJRlZ9qn5gqMxgf8w')) {
+      return false
+    }
+    return true
+  }
+
+  // Helper estricto para el Hero: requiere banner/backdrop horizontal real
+  const hasValidHeroBackdrop = (item) => {
+    if (!item) return false
+    const url = item.backdropUrl || item.backdrop_path
+    if (!url || typeof url !== 'string') return false
+    const clean = url.trim()
+    if (clean.length < 6) return false
+    if (clean.includes('dqK9Hag1054tghRQSqLSPoY2fgn') || clean.includes('7u3DUTNuLhvJRlZ9qn5gqMxgf8w')) {
+      return false
+    }
+    return true
+  }
+
+  // Build hero items list (solo items con banner horizontal válido)
   const heroList = useMemo(() => {
     const list = []
-    // 1. Featured local movies
-    const featuredLocals = localMovies.filter((m) => m.featured)
+    // 1. Featured local movies con backdrop real
+    const featuredLocals = localMovies.filter((m) => m.featured && hasValidHeroBackdrop(m))
     list.push(...featuredLocals)
 
-    // 2. Add top trending movies & series
-    if (trendingMovies.length > 0) list.push(trendingMovies[0])
-    if (trendingSeries.length > 0) list.push(trendingSeries[0])
-    if (trendingMovies.length > 1) list.push(trendingMovies[1])
-    if (trendingSeries.length > 1) list.push(trendingSeries[1])
+    // 2. Add top trending movies & series con backdrop real
+    const validMovies = trendingMovies.filter(hasValidHeroBackdrop)
+    const validSeries = trendingSeries.filter(hasValidHeroBackdrop)
+    if (validMovies.length > 0) list.push(validMovies[0])
+    if (validSeries.length > 0) list.push(validSeries[0])
+    if (validMovies.length > 1) list.push(validMovies[1])
+    if (validSeries.length > 1) list.push(validSeries[1])
 
     // De-duplicate by id / tmdbId
     const seen = new Set()
@@ -223,9 +251,12 @@ export default function HomeView() {
   // Backdrop image URL helper
   const getBackdropUrl = (item) => {
     if (!item) return null
-    const url = item.backdropUrl || item.posterUrl
+    let url = item.backdropUrl || item.posterUrl || item.backdrop_path || item.poster_path
     if (!url) return null
-    if (url.includes('image.tmdb.org')) {
+    if (typeof url === 'string' && url.startsWith('/')) {
+      url = `https://image.tmdb.org/t/p/original${url}`
+    }
+    if (typeof url === 'string' && url.includes('image.tmdb.org')) {
       return `/api/external-movies/image-proxy?url=${encodeURIComponent(url)}`
     }
     return url
@@ -233,9 +264,12 @@ export default function HomeView() {
 
   const getPosterUrl = (item) => {
     if (!item) return null
-    const url = item.posterUrl || item.backdropUrl
+    let url = item.posterUrl || item.backdropUrl || item.poster_path || item.backdrop_path
     if (!url) return null
-    if (url.includes('image.tmdb.org')) {
+    if (typeof url === 'string' && url.startsWith('/')) {
+      url = `https://image.tmdb.org/t/p/w500${url}`
+    }
+    if (typeof url === 'string' && url.includes('image.tmdb.org')) {
       return `/api/external-movies/image-proxy?url=${encodeURIComponent(url)}`
     }
     return url
@@ -297,9 +331,9 @@ export default function HomeView() {
     { label: 'Estrenos Recientes', path: '/catalog?sort=newest', icon: Flame },
   ]
 
-  // Filtered Cartelera items
+  // Filtered Cartelera items (solo con portada válida)
   const carteleraItems = useMemo(() => {
-    const combined = [...localMovies, ...trendingMovies]
+    const combined = [...localMovies, ...trendingMovies].filter(hasValidPoster)
     if (carteleraFilter === '4k') {
       return combined.filter((m) => m.featured || m.rating >= 7.5).slice(0, 6)
     }
@@ -312,9 +346,9 @@ export default function HomeView() {
     return combined.slice(0, 6)
   }, [localMovies, trendingMovies, carteleraFilter])
 
-  // Top 10 items (merged and sorted by rating or popularity)
+  // Top 10 items (merged y filtrados solo con portada válida)
   const top10Items = useMemo(() => {
-    const list = [...trendingMovies, ...trendingSeries, ...localMovies]
+    const list = [...trendingMovies, ...trendingSeries, ...localMovies].filter(hasValidPoster)
     const seen = new Set()
     const unique = []
     for (const item of list) {
@@ -327,11 +361,16 @@ export default function HomeView() {
     return unique.slice(0, 10)
   }, [trendingMovies, trendingSeries, localMovies])
 
-  // Real continue watching cards (only for logged in users with history)
+  // Real continue watching cards (solo items con portada y progreso válido)
   const continueWatchingItems = useMemo(() => {
-    if (!isLoggedIn) return []
-    return watchHistory.slice(0, 10)
-  }, [isLoggedIn, watchHistory])
+    return watchHistory
+      .filter((item) => {
+        const pos = Number(item.position) || 0
+        const dur = Number(item.duration || item.movie?.duration) || 5400
+        return pos >= 15 && pos < dur * 0.95 && hasValidPoster(item.movie || item)
+      })
+      .slice(0, 10)
+  }, [watchHistory])
 
   const scrollTop10 = (direction) => {
     if (top10Ref.current) {
@@ -342,31 +381,42 @@ export default function HomeView() {
 
   return (
     <div className="pb-24 overflow-x-hidden bg-background">
-      {/* ========================================================================= */}
-      {/* 1. HERO SECTION CINEMATOGRÁFICO INTERACTIVO                              */}
-      {/* ========================================================================= */}
-      <section className="relative min-h-[85vh] lg:min-h-[92vh] flex items-center justify-start overflow-hidden pt-20">
-        {heroBg && (
-          <div className="absolute inset-0 z-0">
-            <img
-              key={heroItem?.id || heroItem?.tmdbId}
-              src={heroBg}
-              alt={heroItem?.title}
-              className="w-full h-full object-cover object-center filter brightness-[0.72] scale-105 transition-all duration-1000 animate-fade-in"
-            />
-            {/* Cinematic Vignettes and Gradients */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
-            <div className="absolute inset-0 bg-radial-vignette opacity-80 pointer-events-none" />
-          </div>
-        )}
+      <section className="relative min-h-[85vh] lg:min-h-[90vh] flex items-center justify-start overflow-hidden pt-20">
+        {/* Cinematic Crossfading Backgrounds (Brighter & Vibrant) */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          {heroList.map((item, idx) => {
+            const bg = getBackdropUrl(item) || getPosterUrl(item)
+            const isActive = idx === currentHeroIdx
+            return (
+              <div
+                key={item.id || item.tmdbId || idx}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out pointer-events-none ${
+                  isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
+              >
+                {bg && (
+                  <img
+                    src={bg}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                    className={`w-full h-full object-cover object-center filter brightness-[0.88] transition-transform duration-10000 ease-out ${
+                      isActive ? 'scale-105' : 'scale-100'
+                    }`}
+                  />
+                )}
+              </div>
+            )
+          })}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/35 to-transparent z-20 pointer-events-none" />
+        </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 w-full">
-          <div className="flex flex-col lg:flex-row items-end justify-between gap-8">
-            {/* Left Info Column */}
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 w-full">
+          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8">
             {heroItem ? (
-              <div className="max-w-2xl animate-fade-in space-y-4">
-                {/* Top Badges */}
+              <div className="max-w-2xl flex flex-col justify-end space-y-4 transition-all duration-300">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase bg-primary text-white shadow-glow-primary">
                     <Flame className="w-3.5 h-3.5" />
@@ -377,10 +427,6 @@ export default function HomeView() {
                     4K ULTRA HD
                   </span>
 
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider uppercase bg-amber-400/10 text-amber-400 border border-amber-400/30 backdrop-blur-md">
-                    DOLBY ATMOS
-                  </span>
-
                   {heroItem.rating && (
                     <div className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-black bg-black/40 text-gold border border-gold/30 backdrop-blur-md">
                       <Star className="w-3.5 h-3.5 fill-gold text-gold" />
@@ -389,12 +435,14 @@ export default function HomeView() {
                   )}
                 </div>
 
-                {/* Main Title */}
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight uppercase leading-none drop-shadow-2xl font-display">
+                {/* Natural, tight title spacing without awkward empty gap */}
+                <h1
+                  key={heroItem?.id || heroItem?.tmdbId}
+                  className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight uppercase leading-none drop-shadow-2xl font-display line-clamp-2 animate-fade-in"
+                >
                   {heroItem.title}
                 </h1>
 
-                {/* Metadata Row */}
                 <div className="flex items-center gap-3 text-xs font-semibold text-neutral-300 flex-wrap">
                   <span className="px-1.5 py-0.5 rounded border border-neutral-400 text-[11px] font-bold text-neutral-200">
                     18+
@@ -411,24 +459,19 @@ export default function HomeView() {
                   <span className="text-neutral-300">
                     {heroItem.genres?.map((g) => g.name || g).join(', ') || 'Acción, Distopía, Suspenso'}
                   </span>
-
-                  <span>•</span>
-
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] uppercase font-bold text-neutral-300">
-                    Dolby Vision 7.1
-                  </span>
                 </div>
 
-                {/* Synopsis */}
-                <p className="text-sm sm:text-base text-neutral-300 line-clamp-3 leading-relaxed font-normal max-w-xl drop-shadow-md">
+                <p
+                  key={`desc-${heroItem?.id || heroItem?.tmdbId}`}
+                  className="text-sm sm:text-base text-neutral-300 line-clamp-3 leading-relaxed font-normal max-w-xl drop-shadow-md animate-fade-in"
+                >
                   {heroItem.overview || heroItem.description}
                 </p>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3 pt-3 flex-wrap">
+                <div className="flex items-center gap-3 pt-2 flex-wrap">
                   <Link
                     to={heroPlayLink}
-                    className="px-7 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold flex items-center gap-2.5 shadow-glow-primary hover:scale-105 transition-all"
+                    className="px-7 py-3.5 rounded-sm bg-primary hover:bg-primary-hover text-white text-sm font-bold flex items-center gap-2.5 shadow-glow-primary hover:scale-105 transition-all"
                   >
                     <Play className="w-4 h-4 fill-white" />
                     <span>Ver Ahora</span>
@@ -436,7 +479,7 @@ export default function HomeView() {
 
                   <button
                     onClick={() => toggleSaveToList(heroItem.id || heroItem.tmdbId)}
-                    className="px-5 py-3.5 rounded-xl bg-surface-2/80 hover:bg-surface-3 text-white text-sm font-semibold flex items-center gap-2 border border-white/15 backdrop-blur-md transition-all hover:scale-105"
+                    className="px-5 py-3.5 rounded-sm bg-surface-2/80 hover:bg-surface-3 text-white text-sm font-semibold flex items-center gap-2 border border-white/15 backdrop-blur-md transition-all hover:scale-105"
                   >
                     {savedToList[heroItem.id || heroItem.tmdbId] ? (
                       <>
@@ -453,7 +496,7 @@ export default function HomeView() {
 
                   <Link
                     to={heroInfoLink}
-                    className="px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold flex items-center gap-2 border border-white/15 backdrop-blur-md transition-all hover:scale-105"
+                    className="px-5 py-3.5 rounded-sm bg-white/10 hover:bg-white/20 text-white text-sm font-semibold flex items-center gap-2 border border-white/15 backdrop-blur-md transition-all hover:scale-105"
                   >
                     <Info className="w-4 h-4 text-neutral-300" />
                     <span>Ver Tráiler</span>
@@ -461,7 +504,7 @@ export default function HomeView() {
 
                   <button
                     onClick={() => setIsMuted(!isMuted)}
-                    className="p-3.5 rounded-xl bg-surface-2/80 hover:bg-surface-3 text-white border border-white/15 backdrop-blur-md transition-all"
+                    className="p-3.5 rounded-sm bg-surface-2/80 hover:bg-surface-3 text-white border border-white/15 backdrop-blur-md transition-all"
                     title={isMuted ? 'Activar sonido' : 'Silenciar'}
                   >
                     {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -476,31 +519,33 @@ export default function HomeView() {
               </div>
             )}
 
-            {/* Right Slide Selector Thumbnails (Mini-Carousel) */}
+            {/* Carousel Selector: only items with real images */}
             {heroList.length > 1 && (
-              <div className="hidden sm:flex items-center gap-3 bg-black/40 backdrop-blur-md p-2 rounded-2xl border border-white/10 shadow-2xl">
+              <div className="hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-xl p-2 rounded-2xl border border-white/10 shadow-2xl shrink-0 self-end">
                 {heroList.map((item, idx) => {
                   const isActive = idx === currentHeroIdx
-                  const thumb = getBackdropUrl(item)
+                  const thumb = getBackdropUrl(item) || getPosterUrl(item)
+                  if (!thumb) return null
                   return (
                     <button
                       key={item.id || item.tmdbId || idx}
                       onClick={() => setCurrentHeroIdx(idx)}
-                      className={`relative w-28 h-16 rounded-xl overflow-hidden border-2 transition-all group text-left ${
+                      className={`relative w-28 h-16 rounded-xl overflow-hidden border-2 transition-all duration-300 group text-left bg-surface-2 shrink-0 ${
                         isActive
-                          ? 'border-primary ring-2 ring-primary/40 scale-105'
+                          ? 'border-primary ring-2 ring-primary/40 scale-105 shadow-glow-primary'
                           : 'border-white/20 hover:border-white/60 opacity-60 hover:opacity-100'
                       }`}
                     >
-                      {thumb && (
-                        <img
-                          src={thumb}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute bottom-1 left-1.5 right-1.5">
+                      <img
+                        src={thumb}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.parentElement.style.display = 'none'
+                        }}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
+                      <div className="absolute bottom-1 left-1.5 right-1.5 pointer-events-none">
                         <p className="text-[10px] font-bold text-white truncate drop-shadow">
                           {item.title}
                         </p>
@@ -520,9 +565,6 @@ export default function HomeView() {
         </div>
       </section>
 
-      {/* ========================================================================= */}
-      {/* 2. CATEGORY PILLS BAR (Debajo del Hero)                                   */}
-      {/* ========================================================================= */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-12 relative z-20">
         <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
           {categories.map((cat, idx) => {
@@ -531,7 +573,7 @@ export default function HomeView() {
               <Link
                 key={idx}
                 to={cat.path}
-                className={`whitespace-nowrap flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all ${
+                className={`whitespace-nowrap flex items-center gap-2 px-5 py-2.5 rounded-sm text-xs font-bold transition-all ${
                   cat.active
                     ? 'bg-primary text-white shadow-glow-primary scale-105'
                     : 'bg-surface-2/80 hover:bg-surface-3 text-neutral-300 hover:text-white border border-white/10 hover:border-white/25 backdrop-blur-md'
@@ -546,10 +588,7 @@ export default function HomeView() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 relative z-20">
-        {/* ========================================================================= */}
-        {/* 3. CONTINUAR VIENDO (Widescreen 16:9 Cards con Barra de Progreso)         */}
-        {/* ========================================================================= */}
-        {isLoggedIn && continueWatchingItems.length > 0 && (
+        {continueWatchingItems.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-5">
               <div className="space-y-0.5">
@@ -583,7 +622,7 @@ export default function HomeView() {
                 const durH = Math.floor(duration / 3600)
                 const durM = Math.floor((duration % 3600) / 60)
                 const totalDurationLabel = durH > 0 ? `${durH}h ${durM}m` : `${durM} min`
-                const remainingLabel = progress >= 92 ? 'Completada' : `Quedan ${remainingMin} min`
+                const remainingLabel = progress >= 92 ? 'Completada' : (position < 20 ? 'Por comenzar' : `Quedan ${remainingMin} min`)
 
                 const targetId = item.movieId || movie.id || item.id
                 const link = `/watch/${targetId}?t=${position}${item.season ? `&season=${item.season}` : ''}${item.episode ? `&episode=${item.episode}` : ''}${movie.mediaType === 'tv' ? '&type=tv' : ''}`
@@ -594,7 +633,6 @@ export default function HomeView() {
                     to={link}
                     className="group relative rounded-2xl overflow-hidden bg-surface-1/60 border border-white/10 hover:border-white/30 transition-all hover:-translate-y-1 hover:shadow-2xl"
                   >
-                    {/* 16:9 Thumbnail */}
                     <div className="relative aspect-video w-full overflow-hidden bg-surface-2">
                       {thumb ? (
                         <img
@@ -608,19 +646,16 @@ export default function HomeView() {
                         </div>
                       )}
 
-                      {/* Play Button Overlay */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <div className="w-11 h-11 rounded-full bg-primary/90 flex items-center justify-center text-white shadow-glow-primary scale-90 group-hover:scale-100 transition-transform">
                           <Play className="w-5 h-5 fill-white ml-0.5" />
                         </div>
                       </div>
 
-                      {/* Real Duration Badge */}
                       <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-mono font-bold text-neutral-300 border border-white/10">
                         {totalDurationLabel}
                       </span>
 
-                      {/* Real Red Progress Bar */}
                       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
                         <div
                           className="h-full bg-primary transition-all duration-300"
@@ -629,7 +664,6 @@ export default function HomeView() {
                       </div>
                     </div>
 
-                    {/* Card Info */}
                     <div className="p-3.5 space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="text-sm font-bold text-white truncate group-hover:text-primary transition-colors">
@@ -656,9 +690,6 @@ export default function HomeView() {
           </section>
         )}
 
-        {/* ========================================================================= */}
-        {/* 4. EN CARTELERA HOY · CINE EN CASA (Con pestañas de filtrado)             */}
-        {/* ========================================================================= */}
         <section>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-2">
@@ -666,7 +697,6 @@ export default function HomeView() {
               <h2 className="text-xl font-bold text-white tracking-wide">En Cartelera Hoy · Cine en Casa</h2>
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex items-center gap-1 bg-surface-1/80 p-1 rounded-xl border border-white/10 backdrop-blur-md">
               {[
                 { id: 'all', label: 'Todos' },
@@ -696,9 +726,6 @@ export default function HomeView() {
           </div>
         </section>
 
-        {/* ========================================================================= */}
-        {/* 5. TOP 10 EN MJMOVIES HOY (Grandes Números Estilizados Netflix Style)     */}
-        {/* ========================================================================= */}
         <section>
           <div className="flex items-end justify-between mb-6">
             <div className="space-y-0.5">
@@ -711,7 +738,6 @@ export default function HomeView() {
               </div>
             </div>
 
-            {/* Arrow Controls */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => scrollTop10('left')}
@@ -747,7 +773,6 @@ export default function HomeView() {
                   to={link}
                   className="flex items-end shrink-0 snap-start group relative"
                 >
-                  {/* Big Number (Giant Outlined Gradient Text) */}
                   <span
                     className="font-black text-8xl sm:text-9xl leading-none select-none tracking-tighter -mr-6 sm:-mr-8 z-0 transition-transform group-hover:scale-105 duration-300 font-mono text-neutral-700/60"
                     style={{
@@ -757,7 +782,6 @@ export default function HomeView() {
                     {rank}
                   </span>
 
-                  {/* Poster Card */}
                   <div className="relative w-36 sm:w-44 aspect-[2/3] rounded-2xl overflow-hidden bg-surface-2 border border-white/10 shadow-xl z-10 group-hover:border-primary group-hover:scale-105 group-hover:shadow-glow-primary transition-all duration-300">
                     {poster ? (
                       <img
@@ -773,14 +797,12 @@ export default function HomeView() {
 
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
 
-                    {/* Badge */}
                     <div className="absolute top-2 left-2">
                       <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-primary text-white shadow-glow-primary">
                         TOP {rank}
                       </span>
                     </div>
 
-                    {/* Bottom Title */}
                     <div className="absolute bottom-2.5 left-2.5 right-2.5">
                       <p className="text-xs font-bold text-white truncate drop-shadow-md">
                         {item.title}
@@ -796,15 +818,11 @@ export default function HomeView() {
           </div>
         </section>
 
-        {/* ========================================================================= */}
-        {/* 6. BANNER TECNOLÓGICO: 4K HDR & AUDIO ESPACIAL (Sin prueba gratis)        */}
-        {/* ========================================================================= */}
         <section className="rounded-3xl bg-gradient-to-br from-surface-1/90 via-surface-2/60 to-black/90 border border-white/10 p-6 sm:p-10 relative overflow-hidden backdrop-blur-xl shadow-2xl">
           <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-20 -top-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left Column: Tech Description */}
             <div className="lg:col-span-7 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white border border-white/15 text-xs font-bold">
                 <ShieldCheck className="w-4 h-4 text-primary" />
@@ -852,7 +870,6 @@ export default function HomeView() {
               </div>
             </div>
 
-            {/* Right Column: Smart Remote Feature Card (Sustituto de la prueba gratis) */}
             <div className="lg:col-span-5 p-6 rounded-2xl bg-surface-1/90 border border-white/15 shadow-2xl space-y-4 relative">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -891,9 +908,6 @@ export default function HomeView() {
           </div>
         </section>
 
-        {/* ========================================================================= */}
-        {/* 7. SERIES EN TENDENCIA                                                    */}
-        {/* ========================================================================= */}
         <section>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -916,9 +930,6 @@ export default function HomeView() {
           </div>
         </section>
 
-        {/* ========================================================================= */}
-        {/* 8. SERIES Y PELÍCULAS ACLAMADAS POR LA CRÍTICA                            */}
-        {/* ========================================================================= */}
         <section>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import MovieCard from '../components/movies/MovieCard'
-import { Search, SlidersHorizontal, Film, Tv, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Film, Tv, LayoutGrid, ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react'
 
 export default function CatalogView() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -16,6 +16,7 @@ export default function CatalogView() {
   const currentQuery = searchParams.get('q') || ''
   const currentType = searchParams.get('type') || ''
   const currentGenre = searchParams.get('genre') || ''
+  const currentOrigin = searchParams.get('origin') || '' // 'local' para subidas manualmente
 
   const [searchInput, setSearchInput] = useState(currentQuery)
 
@@ -26,43 +27,147 @@ export default function CatalogView() {
       .catch(() => {})
   }, [])
 
-  // Cargar contenido según filtros
+  // Sincronizar búsqueda en vivo al escribir con debounce de 280ms
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== currentQuery) {
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          if (searchInput.trim()) next.set('q', searchInput.trim())
+          else next.delete('q')
+          return next
+        }, { replace: true })
+        setPage(1)
+      }
+    }, 280)
+
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  // Helper para validar si tiene portada válida
+  const hasValidPoster = (item) => {
+    if (!item) return false
+    const url = item.posterUrl || item.backdropUrl || item.poster_path || item.backdrop_path
+    return Boolean(url && typeof url === 'string' && url.trim().length > 5)
+  }
+
+  // Cargar contenido según filtros (soporte dual de API y subidas manualmente)
+  useEffect(() => {
+    let isMounted = true
+
     const fetchCatalog = async () => {
       setLoading(true)
       try {
         if (currentQuery) {
-          // Búsqueda externa / combinada
-          const res = await api.get('/external-movies/all/search', {
-            params: { query: currentQuery, page },
-          })
-          setItems(res.data.results || res.data.movies || [])
-          setTotalPages(res.data.totalPages || 1)
-        } else if (currentType === 'tv') {
-          const res = await api.get('/external-movies/series/popular', { params: { page } })
-          setItems(res.data.series || [])
-          setTotalPages(res.data.totalPages || 5)
-        } else if (currentType === 'movie') {
-          const res = await api.get('/external-movies/movies/popular', { params: { page } })
-          setItems(res.data.movies || [])
-          setTotalPages(res.data.totalPages || 5)
-        } else {
-          // Todo el catálogo local + destacados
+          // Búsqueda dual simultánea: películas locales (MySQL) + API externa (TMDB)
+          const [localRes, extRes] = await Promise.allSettled([
+            api.get('/movies/search', { params: { q: currentQuery } }),
+            api.get('/external-movies/all/search', { params: { query: currentQuery, page } }),
+          ])
+
+          const locals = localRes.status === 'fulfilled' ? (localRes.value.data.movies || []) : []
+          const extData = extRes.status === 'fulfilled' ? extRes.value.data : {}
+          const externals = extData.items || extData.results || extData.movies || []
+
+          const combined = [...locals, ...externals]
+
+          // De-duplicar por título
+          const seen = new Set()
+          const unique = []
+          for (const it of combined) {
+            const key = (it.title || it.name || '').toLowerCase()
+            if (!seen.has(key) && hasValidPoster(it)) {
+              seen.add(key)
+              unique.push(it)
+            }
+          }
+
+          if (isMounted) {
+            setItems(unique)
+            setTotalPages(extData.totalPages || 1)
+          }
+        } else if (currentOrigin === 'local') {
+          // Solo películas subidas manualmente
           const res = await api.get('/movies', {
             params: { genre: currentGenre, page, limit: 18 },
           })
-          setItems(res.data.movies || [])
-          setTotalPages(res.data.pagination?.totalPages || 1)
+          const raw = res.data.movies || []
+          if (isMounted) {
+            setItems(raw.filter(hasValidPoster))
+            setTotalPages(res.data.pagination?.totalPages || 1)
+          }
+        } else if (currentType === 'tv') {
+          // Series de API
+          const res = await api.get('/external-movies/series/popular', { params: { page } })
+          const raw = res.data.series || []
+          if (isMounted) {
+            setItems(raw.filter(hasValidPoster))
+            setTotalPages(res.data.totalPages || 5)
+          }
+        } else if (currentType === 'movie') {
+          // Películas (locales y de API combinadas)
+          const [localRes, extRes] = await Promise.allSettled([
+            page === 1 ? api.get('/movies?limit=12') : Promise.resolve({ data: { movies: [] } }),
+            api.get('/external-movies/movies/popular', { params: { page } }),
+          ])
+
+          const locals = localRes.status === 'fulfilled' ? (localRes.value.data.movies || []) : []
+          const externals = extRes.status === 'fulfilled' ? (extRes.value.data.movies || []) : []
+
+          const combined = [...locals, ...externals]
+          const seen = new Set()
+          const unique = []
+          for (const it of combined) {
+            const key = (it.title || '').toLowerCase()
+            if (!seen.has(key) && hasValidPoster(it)) {
+              seen.add(key)
+              unique.push(it)
+            }
+          }
+
+          if (isMounted) {
+            setItems(unique)
+            setTotalPages(extRes.status === 'fulfilled' ? (extRes.value.data.totalPages || 5) : 1)
+          }
+        } else {
+          // Catálogo completo integrado (locales subidas manualmente + API)
+          const [localRes, extRes] = await Promise.allSettled([
+            page === 1 ? api.get('/movies?limit=12') : Promise.resolve({ data: { movies: [] } }),
+            api.get('/external-movies/movies/popular', { params: { page } }),
+          ])
+
+          const locals = localRes.status === 'fulfilled' ? (localRes.value.data.movies || []) : []
+          const externals = extRes.status === 'fulfilled' ? (extRes.value.data.movies || []) : []
+
+          const combined = [...locals, ...externals]
+          const seen = new Set()
+          const unique = []
+          for (const it of combined) {
+            const key = (it.title || '').toLowerCase()
+            if (!seen.has(key) && hasValidPoster(it)) {
+              seen.add(key)
+              unique.push(it)
+            }
+          }
+
+          if (isMounted) {
+            setItems(unique)
+            setTotalPages(extRes.status === 'fulfilled' ? (extRes.value.data.totalPages || 5) : 1)
+          }
         }
       } catch (err) {
         console.error('Error cargando catálogo:', err)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     fetchCatalog()
-  }, [currentQuery, currentType, currentGenre, page])
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentQuery, currentType, currentGenre, currentOrigin, page])
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -75,11 +180,25 @@ export default function CatalogView() {
     setPage(1)
   }
 
-  const setFilterType = (type) => {
+  const clearSearch = () => {
+    setSearchInput('')
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('q')
+      return next
+    })
+    setPage(1)
+  }
+
+  const setFilterType = (type, origin = '') => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       if (type) next.set('type', type)
       else next.delete('type')
+
+      if (origin) next.set('origin', origin)
+      else next.delete('origin')
+
       return next
     })
     setPage(1)
@@ -97,34 +216,47 @@ export default function CatalogView() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-24 min-h-screen">
+      {/* Encabezado y Barra de Búsqueda Reactiva */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
             Catálogo Completo
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
-            Explora todas las películas, series y producciones disponibles.
+            Explora producciones subidas y estrenos de la API en ultra definición.
           </p>
         </div>
 
+        {/* Buscador reactivo en vivo */}
         <form onSubmit={handleSearchSubmit} className="relative max-w-md w-full">
           <input
             type="text"
-            placeholder="Buscar por título, reparto, director..."
+            placeholder="Filtrar por título según vas escribiendo..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full bg-surface-2/90 border border-white/15 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-neutral-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary backdrop-blur-md"
+            className="w-full bg-surface-2/90 border border-white/15 focus:border-primary rounded-xl py-2.5 pl-10 pr-10 text-sm text-white placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-primary backdrop-blur-md transition-all"
           />
-          <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1"
+              title="Limpiar búsqueda"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </form>
       </div>
 
+      {/* Barra de Filtros: Todos, Películas, Series, Subidas / Locales */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl bg-surface-1 border border-white/10 mb-8">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
-            onClick={() => setFilterType('')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              !currentType ? 'bg-primary text-white shadow-glow-primary' : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            onClick={() => setFilterType('', '')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+              !currentType && !currentOrigin ? 'bg-primary text-white shadow-glow-primary' : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -132,9 +264,9 @@ export default function CatalogView() {
           </button>
 
           <button
-            onClick={() => setFilterType('movie')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              currentType === 'movie' ? 'bg-primary text-white shadow-glow-primary' : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            onClick={() => setFilterType('movie', '')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+              currentType === 'movie' && !currentOrigin ? 'bg-primary text-white shadow-glow-primary' : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Film className="w-3.5 h-3.5" />
@@ -142,17 +274,27 @@ export default function CatalogView() {
           </button>
 
           <button
-            onClick={() => setFilterType('tv')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            onClick={() => setFilterType('tv', '')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
               currentType === 'tv' ? 'bg-primary text-white shadow-glow-primary' : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Tv className="w-3.5 h-3.5" />
             <span>Series</span>
           </button>
+
+          <button
+            onClick={() => setFilterType('', 'local')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+              currentOrigin === 'local' ? 'bg-primary text-white shadow-glow-primary' : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Subidas / Locales</span>
+          </button>
         </div>
 
-        {genres.length > 0 && !currentType && (
+        {genres.length > 0 && !currentType && !currentOrigin && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-neutral-400 font-medium">Género:</span>
             <select
@@ -171,6 +313,7 @@ export default function CatalogView() {
         )}
       </div>
 
+      {/* Cuadrícula de Películas */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -186,11 +329,14 @@ export default function CatalogView() {
       ) : (
         <div className="text-center py-20 bg-surface-1/50 rounded-2xl border border-white/5">
           <Film className="w-16 h-16 mx-auto text-neutral-600 mb-4" />
-          <h3 className="text-lg font-bold text-white mb-1">No se encontraron resultados</h3>
-          <p className="text-sm text-neutral-400">Prueba con otros términos de búsqueda o filtros.</p>
+          <h3 className="text-lg font-bold text-white mb-1">No se encontraron producciones</h3>
+          <p className="text-sm text-neutral-400">
+            {searchInput ? `No hay resultados para "${searchInput}" con portada disponible.` : 'Prueba cambiando los filtros.'}
+          </p>
         </div>
       )}
 
+      {/* Paginación */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-12">
           <button

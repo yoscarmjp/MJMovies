@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import api from '../services/api'
+import MovieCard from '../components/movies/MovieCard'
+import StarRating from '../components/movies/StarRating'
 import { Play, Star, Calendar, Clock, Globe, Eye, Edit3, ArrowLeft, Film, Layers, ChevronRight } from 'lucide-react'
 
 export default function MovieView() {
@@ -173,6 +175,16 @@ export default function MovieView() {
                   <span>{movie.views.toLocaleString()} vistas</span>
                 </div>
               )}
+            </div>
+
+            {/* Puntuación interactiva y cálculo de estrellas */}
+            <div className="mb-6 max-w-lg">
+              <StarRating
+                movieId={movie.id}
+                initialRating={movie.rating}
+                title={movie.title}
+                onRatingChange={(newRating) => setMovie((prev) => ({ ...prev, rating: newRating }))}
+              />
             </div>
 
             <p className="text-neutral-300 text-sm sm:text-base leading-relaxed mb-6 max-w-3xl">

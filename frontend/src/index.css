@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: dark;
     --color-primary: #e50914;
     --color-bg: #0a0a0f;
     --color-surface-1: #12121a;
@@ -32,6 +33,21 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #353548;
   }
+
+  input {
+    color-scheme: dark;
+  }
+
+  /* Autofill para tema oscuro en navegadores WebKit/Chromium */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #13131b inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }
 
 @layer utilities {
@@ -57,4 +73,13 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 0.5rem;
+}
+
+@keyframes progressFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-progress-fill {
+  animation: progressFill 9s linear forwards;
 }

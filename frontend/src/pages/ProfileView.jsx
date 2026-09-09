@@ -24,8 +24,62 @@ export default function ProfileView() {
   const fetchHistory = async () => {
     setLoadingHistory(true);
     try {
-      const { data } = await api.get('/movies/user/history');
-      setHistory(data.history || []);
+      let backendItems = [];
+      try {
+        const { data } = await api.get('/movies/user/history');
+        backendItems = data.history || [];
+      } catch {}
+
+      let localItems = [];
+      try {
+        const raw = localStorage.getItem('mjmovies_recent_history');
+        if (raw) localItems = JSON.parse(raw);
+      } catch {}
+
+      const map = new Map();
+      localItems.forEach((item) => {
+        const key = item.movieId || item.id;
+        const pos = Number(item.position) || 0;
+        if (key && pos >= 15) {
+          map.set(key, {
+            id: key,
+            movieId: key,
+            position: pos,
+            duration: item.duration || 5400,
+            updatedAt: item.updatedAt,
+            movie: {
+              id: key,
+              title: item.title,
+              posterUrl: item.posterUrl,
+              backdropUrl: item.backdropUrl,
+              duration: item.duration,
+            },
+          });
+        }
+      });
+
+      backendItems.forEach((item) => {
+        const key = item.movieId || item.movie?.id;
+        const pos = Number(item.position) || 0;
+        if (key && pos >= 15) {
+          const existing = map.get(key);
+          if (!existing || new Date(item.updatedAt) >= new Date(existing.updatedAt)) {
+            map.set(key, {
+              ...item,
+              id: key,
+              movieId: key,
+              position: pos,
+              duration: item.movie?.duration || item.duration || 5400,
+            });
+          }
+        }
+      });
+
+      const combined = Array.from(map.values()).sort(
+        (a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
+      );
+
+      setHistory(combined);
     } catch {
       setHistory([]);
     } finally {
@@ -161,7 +215,7 @@ export default function ProfileView() {
                       </p>
                       <div className="mt-3">
                         <Link
-                          to={`/watch/${item.movieId || item.movie?.id}`}
+                          to={`/watch/${item.movieId || item.movie?.id || item.id}?t=${item.position || 0}`}
                           className="inline-flex items-center gap-1 px-3 py-1 rounded bg-primary/20 hover:bg-primary text-primary hover:text-white text-xs font-semibold transition-colors"
                         >
                           <Play size={12} fill="currentColor" /> Continuar

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import StarRating from '../components/movies/StarRating'
 import { Play, Star, Calendar, Clock, ArrowLeft, Film, Tv, Layers, ChevronRight } from 'lucide-react'
 
 export default function ExternalMovieView() {
@@ -172,6 +173,16 @@ export default function ExternalMovieView() {
                   <span>{seasonsCount} temporada{seasonsCount > 1 ? 's' : ''}</span>
                 </div>
               )}
+            </div>
+
+            {/* Puntuación interactiva y cálculo de estrellas */}
+            <div className="mb-6 max-w-lg">
+              <StarRating
+                movieId={item.id || item.tmdbId || id}
+                initialRating={item.rating}
+                title={item.title}
+                onRatingChange={(newRating) => setItem((prev) => ({ ...prev, rating: newRating }))}
+              />
             </div>
 
             <p className="text-neutral-300 text-sm sm:text-base leading-relaxed mb-6 max-w-3xl">

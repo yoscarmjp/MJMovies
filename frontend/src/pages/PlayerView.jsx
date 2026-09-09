@@ -115,11 +115,34 @@ export default function PlayerView() {
     }
   }
 
+  // Apply playback resume position cleanly
+  const applyResume = useCallback((vid) => {
+    const video = vid || videoRef.current
+    if (!video || !savedProgressRef.current || savedProgressRef.current <= 5) return
+    if (hasResumedRef.current) return
+
+    const target = savedProgressRef.current
+    const dur = video.duration || 0
+    const safeTarget = dur > 15 && isFinite(dur) ? Math.min(target, Math.max(0, dur - 10)) : target
+
+    try {
+      video.currentTime = safeTarget
+      hasResumedRef.current = true
+      const m = Math.floor(safeTarget / 60)
+      const s = Math.floor(safeTarget % 60)
+      toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
+    } catch (err) {
+      console.warn('Error applying resume:', err)
+    }
+  }, [toastInfo])
+
   // Initial Content Load
   useEffect(() => {
     const loadContent = async () => {
       setLoading(true)
       setError(null)
+      hasResumedRef.current = false
+      savedProgressRef.current = 0
 
       try {
         // 1. Obtener streams y servidores
@@ -166,7 +189,7 @@ export default function PlayerView() {
           if (raw) localT = JSON.parse(raw).position || 0
         } catch {}
 
-        const bestProgress = queryT || mData?.progress || localT || 0
+        const bestProgress = (queryT > 0 ? queryT : 0) || mData?.progress || localT || 0
         if (bestProgress > 5) {
           savedProgressRef.current = bestProgress
         }
@@ -240,19 +263,14 @@ export default function PlayerView() {
           lowLatencyMode: false,
           backBufferLength: 90,
           capLevelToPlayerSize: true,
+          startPosition: savedProgressRef.current > 5 ? savedProgressRef.current : -1,
         })
         hlsRef.current = hls
         hls.loadSource(url)
         hls.attachMedia(video)
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (!hasResumedRef.current && savedProgressRef.current > 5) {
-            hasResumedRef.current = true
-            video.currentTime = savedProgressRef.current
-            const m = Math.floor(savedProgressRef.current / 60)
-            const s = Math.floor(savedProgressRef.current % 60)
-            toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
-          }
+          applyResume(video)
           video.play().catch(() => setIsPlaying(false))
         })
 
@@ -275,10 +293,7 @@ export default function PlayerView() {
         })
       } else {
         video.src = isHlsUrl ? url : (url || mp4Fallback)
-        if (!hasResumedRef.current && savedProgressRef.current > 5) {
-          hasResumedRef.current = true
-          video.currentTime = savedProgressRef.current
-        }
+        applyResume(video)
         video.play().catch(() => setIsPlaying(false))
       }
     }
@@ -289,7 +304,7 @@ export default function PlayerView() {
         hlsRef.current = null
       }
     }
-  }, [activeServer])
+  }, [activeServer, applyResume])
 
   // Periodic progress saving interval
   useEffect(() => {
@@ -570,7 +585,13 @@ export default function PlayerView() {
         {activeServer?.type === 'embed' ? (
           <div className="w-full h-full relative">
             <iframe
-              src={activeServer.url}
+              src={
+                savedProgressRef.current > 5 && activeServer.url
+                  ? `${activeServer.url}${activeServer.url.includes('?') ? '&' : '?'}start=${Math.floor(
+                      savedProgressRef.current
+                    )}&t=${Math.floor(savedProgressRef.current)}`
+                  : activeServer.url
+              }
               className="w-full h-full border-0 block"
               allowFullScreen
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
@@ -633,26 +654,20 @@ export default function PlayerView() {
                 if (videoRef.current) {
                   const vidDur = videoRef.current.duration || 0
                   setDuration(vidDur)
-                  if (!hasResumedRef.current && savedProgressRef.current > 5) {
-                    hasResumedRef.current = true
-                    const targetTime = Math.min(savedProgressRef.current, vidDur > 15 ? vidDur - 10 : savedProgressRef.current)
-                    videoRef.current.currentTime = targetTime
-                    const m = Math.floor(targetTime / 60)
-                    const s = Math.floor(targetTime % 60)
-                    toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
-                  }
+                  applyResume(videoRef.current)
                 }
               }}
               onCanPlay={() => {
-                if (!hasResumedRef.current && savedProgressRef.current > 5 && videoRef.current) {
-                  hasResumedRef.current = true
-                  videoRef.current.currentTime = savedProgressRef.current
-                  const m = Math.floor(savedProgressRef.current / 60)
-                  const s = Math.floor(savedProgressRef.current % 60)
-                  toastInfo(`Reanudando reproducción desde ${m}:${s < 10 ? '0' : ''}${s}`)
+                if (videoRef.current) {
+                  applyResume(videoRef.current)
                 }
               }}
-              onPlay={() => setIsPlaying(true)}
+              onPlay={() => {
+                setIsPlaying(true)
+                if (videoRef.current) {
+                  applyResume(videoRef.current)
+                }
+              }}
               onPause={() => {
                 setIsPlaying(false)
                 if (videoRef.current) {

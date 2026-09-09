@@ -1,0 +1,65 @@
+# ====================================
+# Node
+# ====================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ====================================
+# Environment
+# ====================================
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ====================================
+# Builds
+# ====================================
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+
+# ====================================
+# Uploads / Streams (generados en runtime)
+# ====================================
+backend/uploads/
+backend/streams/
+backend/posters/
+backend/logs/
+
+# ====================================
+# Prisma
+# ====================================
+backend/prisma/migrations/
+
+# ====================================
+# Docker volumes (managed by Docker)
+# ====================================
+docker/data/
+
+# ====================================
+# OS
+# ====================================
+.DS_Store
+Thumbs.db
+*.log
+
+# ====================================
+# IDE
+# ====================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ====================================
+# SSL certs (nunca commitear)
+# ====================================
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt

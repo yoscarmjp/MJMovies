@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "MJMovies Remote",
+    "slug": "mjmovies-remote",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "mjmovies-remote",
+    "android": {
+      "package": "com.mjstudios.mjmovies.remote",
+      "permissions": [
+        "VIBRATE",
+        "CAMERA"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0a0f"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "df0ad278-5f0e-443d-9be3-4d561e872d48"
+      }
+    },
+    "owner": "yoscarmjp"
+  }
+}

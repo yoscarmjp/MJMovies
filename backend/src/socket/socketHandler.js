@@ -1,0 +1,175 @@
+import { logger } from '../utils/logger.js';
+import { prisma } from '../config/database.js';
+
+// Cache en memoria para el último estado conocido de cada reproductor
+const playerStates = new Map();
+global.playerStates = playerStates;
+
+/**
+ * Socket.io handler para control remoto y notificaciones en tiempo real
+ */
+export function initializeSocket(io) {
+  // Hacer io disponible globalmente para los jobs de transcodificación
+  global.io = io;
+
+  io.on('connection', (socket) => {
+    const { sessionId, role } = socket.handshake.query;
+
+    logger.info(`Socket conectado: ${socket.id} (session: ${sessionId || 'none'}, role: ${role || 'none'})`);
+
+    // ====================================
+    // TV APP — unirse a sala de sesión
+    // ====================================
+    if (sessionId) {
+      socket.join(`tv:${sessionId}`);
+      socket.sessionId = sessionId;
+      logger.info(`TV unida a sala: tv:${sessionId}`);
+
+      // Notificar al control remoto que la TV está online
+      socket.to(`remote:${sessionId}`).emit('tv:online', { sessionId });
+    }
+
+    // ====================================
+    // ADMIN — unirse a sala admin
+    // ====================================
+    if (role === 'admin') {
+      socket.join('admin');
+      logger.info(`Admin conectado: ${socket.id}`);
+    }
+
+    // ====================================
+    // PLAYER EVENTS (TV → Server → Remote)
+    // ====================================
+    socket.on('player:state', (data) => {
+      const activeSession = sessionId || socket.sessionId;
+      if (activeSession && data) {
+        // Guardar último estado conocido
+        const enrichedState = {
+          ...data,
+          timestamp: Date.now(),
+        };
+        playerStates.set(activeSession, enrichedState);
+
+        // Reenviar a controles remotos en la sala
+        socket.to(`remote:${activeSession}`).emit('player:state', enrichedState);
+      }
+    });
+
+    // ====================================
+    // REMOTE APP — unirse a sala de control
+    // ====================================
+    socket.on('remote:join', async ({ tvSessionId, pairingCode }) => {
+      let targetId = tvSessionId;
+
+      // Si no proporcionó tvSessionId pero sí pairingCode, buscar la sesión
+      if (!targetId && pairingCode) {
+        try {
+          const session = await prisma.remoteSession.findFirst({
+            where: {
+              pairingCode,
+              expiresAt: { gt: new Date() },
+            },
+          });
+          if (session) {
+            targetId = session.tvSessionId;
+            await prisma.remoteSession.update({
+              where: { id: session.id },
+              data: { isConnected: true },
+            });
+          }
+        } catch (dbErr) {
+          logger.error(`Error buscando sesión por pairingCode en socket: ${dbErr.message}`);
+        }
+      }
+
+      if (targetId) {
+        socket.join(`remote:${targetId}`);
+        socket.remoteTvSessionId = targetId;
+
+        // Verificar si la TV está online
+        const tvRoom = io.sockets.adapter.rooms.get(`tv:${targetId}`);
+        const isOnline = !!tvRoom && tvRoom.size > 0;
+
+        socket.emit('tv:status', { online: isOnline, tvSessionId: targetId });
+
+        // Enviar el último estado de reproducción conocido si existe
+        const currentState = playerStates.get(targetId);
+        if (currentState) {
+          socket.emit('player:state', currentState);
+        }
+
+        if (isOnline) {
+          io.to(`tv:${targetId}`).emit('remote:connected', { socketId: socket.id });
+          logger.info(`Control remoto (${socket.id}) emparejado con TV en tv:${targetId}`);
+        }
+      } else {
+        socket.emit('remote:error', { message: 'Sesión no válida o expirada' });
+      }
+    });
+
+    // ====================================
+    // COMANDOS DIRECTOS VÍA WEBSOCKET (Remote → TV)
+    // ====================================
+    socket.on('remote:command', async ({ tvSessionId, pairingCode, command, payload }) => {
+      let targetId = tvSessionId || socket.remoteTvSessionId;
+
+      if (!targetId && pairingCode) {
+        try {
+          const session = await prisma.remoteSession.findFirst({
+            where: { pairingCode, expiresAt: { gt: new Date() } },
+          });
+          if (session) targetId = session.tvSessionId;
+        } catch (e) {
+          logger.error(`Error resolviendo tvSessionId para comando: ${e.message}`);
+        }
+      }
+
+      if (targetId && command) {
+        io.to(`tv:${targetId}`).emit('remote:command', {
+          command,
+          payload: payload || {},
+        });
+      }
+    });
+
+    // ====================================
+    // PEDIR ESTADO ACTUAL DEL REPRODUCTOR
+    // ====================================
+    socket.on('player:getState', ({ tvSessionId }) => {
+      const targetId = tvSessionId || socket.remoteTvSessionId;
+      if (targetId) {
+        const state = playerStates.get(targetId);
+        if (state) {
+          socket.emit('player:state', state);
+        }
+      }
+    });
+
+    // ====================================
+    // DESCONEXIÓN
+    // ====================================
+    socket.on('disconnect', (reason) => {
+      logger.info(`Socket desconectado: ${socket.id} (${reason})`);
+
+      const activeSession = sessionId || socket.sessionId;
+      if (activeSession) {
+        // Notificar que la TV se desconectó
+        socket.to(`remote:${activeSession}`).emit('tv:offline', { sessionId: activeSession });
+        playerStates.delete(activeSession);
+      }
+
+      if (socket.remoteTvSessionId) {
+        io.to(`tv:${socket.remoteTvSessionId}`).emit('remote:disconnected', { socketId: socket.id });
+      }
+    });
+
+    // ====================================
+    // HEARTBEAT — mantener conexión viva
+    // ====================================
+    socket.on('ping', () => {
+      socket.emit('pong', { time: Date.now() });
+    });
+  });
+
+  logger.info('✅ Socket.io inicializado');
+}

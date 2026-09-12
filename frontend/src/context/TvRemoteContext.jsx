@@ -210,22 +210,40 @@ export function TvRemoteProvider({ children }) {
   }, [getNavigableElements, applyFocusStyle]);
 
   // Selección (Botón OK)
-  const handleSelect = useCallback(() => {
+  const handleSelect = useCallback((fromSocket = false) => {
     const current = focusedElementRef.current;
     const playBtn = document.querySelector('[data-nav-item="player-play"]');
     const video = document.querySelector('video');
+    const iframe = document.querySelector('iframe');
+    const isPlayerActive = !!document.querySelector('[data-player-container]') || !!video || !!iframe;
+    const isInsideModal = current && (current.closest('[role="dialog"]') || current.closest('[data-modal]'));
 
-    if (current && document.body.contains(current)) {
+    // 1. Si hay un elemento enfocado dentro de un modal o es un input
+    if (current && document.body.contains(current) && (isInsideModal || current.tagName === 'INPUT')) {
       showHud('✓ Seleccionado');
       current.click();
       if (current.tagName === 'INPUT') {
         current.focus();
       }
-    } else if (playBtn) {
+      return;
+    }
+
+    // 2. Si no estamos en el reproductor y hay un elemento enfocado
+    if (!isPlayerActive && current && document.body.contains(current)) {
+      showHud('✓ Seleccionado');
+      current.click();
+      return;
+    }
+
+    // 3. Si hay un botón explícito de play
+    if (playBtn && !iframe) {
       showHud('▶ Iniciar');
       playBtn.click();
-    } else if (video) {
-      // En reproductor si no hay botón enfocado, alternar play/pause
+      return;
+    }
+
+    // 4. Si hay un video nativo activo
+    if (video) {
       if (video.paused) {
         video.play().catch(() => {});
         showHud('▶ Reanudar');
@@ -233,15 +251,19 @@ export function TvRemoteProvider({ children }) {
         video.pause();
         showHud('⏸ Pausar');
       }
-    } else {
+      return;
+    }
+
+    // 5. Si estamos en el reproductor (iframe o general)
+    if (!fromSocket) {
       window.dispatchEvent(
         new CustomEvent('mjmovies:remote_command', {
-          detail: { command: 'play', payload: {} },
+          detail: { command: 'select', payload: {} },
         })
       );
-      showHud('▶ Reproducir');
     }
-  }, []);
+    showHud('▶ Reproducir / Pausa');
+  }, [showHud]);
 
   // Volver (Botón Volver)
   const handleBack = useCallback(() => {
@@ -399,7 +421,7 @@ export function TvRemoteProvider({ children }) {
           break;
 
         case 'select':
-          handleSelect();
+          handleSelect(true);
           break;
 
         case 'back':
@@ -417,24 +439,25 @@ export function TvRemoteProvider({ children }) {
         case 'play':
           if (video) {
             video.play().catch(() => {});
-            showHud('▶ Reproducir');
           }
+          showHud('▶ Reproducir');
           break;
 
         case 'pause':
           if (video) {
             video.pause();
-            showHud('⏸ Pausa');
           }
+          showHud('⏸ Pausa');
           break;
 
-        case 'seek':
+        case 'seek': {
+          const delta = p.value || 10;
           if (video) {
-            const delta = p.value || 10;
             video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + delta));
-            showHud(`${delta > 0 ? '⏩ +' : '⏪ '}${delta}s`);
           }
+          showHud(`${delta > 0 ? '⏩ +' : '⏪ '}${delta}s`);
           break;
+        }
 
         case 'seekTo':
           if (video && typeof p.position === 'number') {
@@ -442,24 +465,34 @@ export function TvRemoteProvider({ children }) {
           }
           break;
 
-        case 'volume':
+        case 'volume': {
+          const delta = p.value || 0.1;
           if (video) {
-            const delta = p.value || 0.1;
             video.volume = Math.max(0, Math.min(1, video.volume + delta));
             showHud(`🔊 Volumen: ${Math.round(video.volume * 100)}%`);
+          } else {
+            showHud(`🔊 Volumen ${delta > 0 ? '+10%' : '-10%'}`);
           }
           break;
+        }
 
-        case 'fullscreen':
-          if (video) {
-            if (!document.fullscreenElement) {
-              const container = video.parentElement || video;
-              container.requestFullscreen?.().catch(() => {});
-            } else {
-              document.exitFullscreen?.().catch(() => {});
+        case 'fullscreen': {
+          const container = document.querySelector('[data-player-container]') || video?.parentElement || video || document.querySelector('iframe')?.parentElement;
+          if (!document.fullscreenElement) {
+            if (container?.requestFullscreen) {
+              container.requestFullscreen().catch(() => {});
+            } else if (container?.webkitRequestFullscreen) {
+              container.webkitRequestFullscreen();
             }
+            showHud('⛶ Pantalla Completa');
+          } else {
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            }
+            showHud('⛶ Salir de Pantalla');
           }
           break;
+        }
 
         default:
           break;
@@ -478,7 +511,7 @@ export function TvRemoteProvider({ children }) {
     }
   }, []);
 
-  const value = {
+  const value = React.useMemo(() => ({
     tvSessionId,
     pairingCode,
     serverUrl,
@@ -495,7 +528,24 @@ export function TvRemoteProvider({ children }) {
     handleBack,
     handleHome,
     handleSearch,
-  };
+  }), [
+    tvSessionId,
+    pairingCode,
+    serverUrl,
+    lanIp,
+    backendPort,
+    frontendUrl,
+    qrCode,
+    expiresAt,
+    remoteConnected,
+    refreshPairing,
+    sendPlayerState,
+    handleDirectionalNav,
+    handleSelect,
+    handleBack,
+    handleHome,
+    handleSearch,
+  ]);
 
   return (
     <TvRemoteContext.Provider value={value}>

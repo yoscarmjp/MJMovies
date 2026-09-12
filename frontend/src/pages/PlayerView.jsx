@@ -64,10 +64,10 @@ export default function PlayerView() {
   const [showEpisodesModal, setShowEpisodesModal] = useState(false)
   const [loadingEpisodes, setLoadingEpisodes] = useState(false)
   const [episodesList, setEpisodesList] = useState([])
-  const [embedStarted, setEmbedStarted] = useState(false)
 
   // Native Video Player State
   const videoRef = useRef(null)
+  const iframeRef = useRef(null)
   const playerContainerRef = useRef(null)
   const hlsRef = useRef(null)
   const controlsTimeoutRef = useRef(null)
@@ -349,13 +349,10 @@ export default function PlayerView() {
     const timer = setInterval(() => {
       if (videoRef.current && isPlaying) {
         saveProgress(videoRef.current.currentTime, videoRef.current.duration)
-      } else if (activeServer?.type === 'embed') {
-        savedProgressRef.current = (savedProgressRef.current || 0) + 5
-        saveProgress(savedProgressRef.current, movie?.duration || 5400)
       }
     }, 5000)
     return () => clearInterval(timer)
-  }, [isPlaying, activeServer, saveProgress, movie])
+  }, [isPlaying, saveProgress])
 
   // Save on unload / leave
   useEffect(() => {
@@ -523,20 +520,6 @@ export default function PlayerView() {
     const handleRemoteCommand = (e) => {
       const { command, payload } = e.detail || {}
 
-      if (command === 'play') {
-        setEmbedStarted(true)
-        if (videoRef.current) {
-          videoRef.current.play().catch(() => {})
-          setIsPlaying(true)
-        }
-        return
-      }
-
-      if (command === 'select' && (!videoRef.current || activeServer?.type === 'embed')) {
-        setEmbedStarted(true)
-        return
-      }
-
       if (command === 'back') {
         if (showEpisodesModal) {
           setShowEpisodesModal(false)
@@ -552,46 +535,84 @@ export default function PlayerView() {
         return
       }
 
-      const video = videoRef.current
-      if (!video) return
+      if (command === 'fullscreen') {
+        toggleFullscreen()
+        return
+      }
 
-      switch (command) {
-        case 'pause':
-          video.pause()
-          setIsPlaying(false)
-          break
-        case 'select':
-          if (video.paused) {
-            video.play().catch(() => {})
+      if (command === 'toggleMute') {
+        toggleMute()
+        return
+      }
+
+      if (command === 'volume') {
+        const delta = payload?.value || 0.1
+        setVolume((prev) => {
+          const newVol = Math.max(0, Math.min(1, prev + delta))
+          setIsMuted(newVol === 0)
+          if (videoRef.current) {
+            videoRef.current.volume = newVol
+            videoRef.current.muted = newVol === 0
+          }
+          return newVol
+        })
+        return
+      }
+
+      if (command === 'seek') {
+        const delta = payload?.value || 10
+        if (videoRef.current) {
+          seekRelative(delta)
+        }
+        return
+      }
+
+      if (command === 'seekTo') {
+        const pos = typeof payload?.position === 'number' ? payload.position : 0
+        if (videoRef.current) {
+          videoRef.current.currentTime = pos
+          setCurrentTime(pos)
+        }
+        return
+      }
+
+      if (command === 'pause') {
+        if (videoRef.current) {
+          videoRef.current.pause()
+        }
+        setIsPlaying(false)
+        return
+      }
+
+      if (command === 'play') {
+        if (videoRef.current) {
+          videoRef.current.play().catch(() => {})
+        }
+        setIsPlaying(true)
+        const iframe = iframeRef.current || playerContainerRef.current?.querySelector('iframe')
+        if (iframe) {
+          iframe.focus()
+        }
+        return
+      }
+
+      if (command === 'select') {
+        if (videoRef.current) {
+          if (videoRef.current.paused) {
+            videoRef.current.play().catch(() => {})
             setIsPlaying(true)
           } else {
-            video.pause()
+            videoRef.current.pause()
             setIsPlaying(false)
           }
-          break
-        case 'seek':
-          seekRelative(payload?.value || 10)
-          break
-        case 'seekTo':
-          if (typeof payload?.position === 'number') {
-            video.currentTime = payload.position
-            setCurrentTime(payload.position)
+        } else {
+          const iframe = iframeRef.current || playerContainerRef.current?.querySelector('iframe')
+          if (iframe) {
+            iframe.focus()
           }
-          break
-        case 'volume':
-          const newVol = Math.max(0, Math.min(1, video.volume + (payload?.value || 0.1)))
-          video.volume = newVol
-          setVolume(newVol)
-          setIsMuted(false)
-          break
-        case 'toggleMute':
-          toggleMute()
-          break
-        case 'fullscreen':
-          toggleFullscreen()
-          break
-        default:
-          break
+          setIsPlaying((prev) => !prev)
+        }
+        return
       }
     }
 
@@ -599,7 +620,7 @@ export default function PlayerView() {
     return () => {
       window.removeEventListener('mjmovies:remote_command', handleRemoteCommand)
     }
-  }, [showEpisodesModal, showServerMenu, showLangMenu, showPairingPanel, activeServer, navigate, seekRelative, toggleMute, toggleFullscreen])
+  }, [showEpisodesModal, showServerMenu, showLangMenu, showPairingPanel, navigate, seekRelative, toggleMute, toggleFullscreen])
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00'
@@ -703,21 +724,17 @@ export default function PlayerView() {
   
         <div
           ref={playerContainerRef}
+          data-player-container="true"
           className="relative z-0 aspect-video w-full rounded-sm overflow-hidden bg-black border border-white/15 shadow-2xl group"
           onMouseMove={showControls}
           onTouchStart={showControls}
         >
           {activeServer?.type === 'embed' ? (
-            <div className="w-full h-full relative">
+            <div className="w-full h-full relative" tabIndex={0}>
               <iframe
-                key={`${activeServer?.id || 'server'}-${selectedLanguage}-${currentSeason}-${currentEpisode}`}
-                src={
-                  savedProgressRef.current > 5 && activeServer.url
-                    ? `${activeServer.url}${activeServer.url.includes('?') ? '&' : '?'}start=${Math.floor(
-                        savedProgressRef.current
-                      )}&t=${Math.floor(savedProgressRef.current)}`
-                    : activeServer.url
-                }
+                ref={iframeRef}
+                key={`embed-${activeServer?.id || 'server'}-${selectedLanguage}-${currentSeason}-${currentEpisode}`}
+                src={activeServer.url}
                 className="w-full h-full border-0 block"
                 allowFullScreen
                 allow="autoplay; encrypted-media; fullscreen; picture-in-picture"

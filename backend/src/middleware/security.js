@@ -39,26 +39,14 @@ export const securityMiddleware = helmet({
     },
   },
 
-  // Permitir iframes en el mismo origen
   frameguard: { action: 'sameorigin' },
-
-  // Prevenir MIME sniffing (subir un .mp4 malicioso que se ejecute como JS)
   noSniff: true,
-
-  // Forzar HTTPS en producción
   hsts: process.env.NODE_ENV === 'production'
     ? { maxAge: 31536000, includeSubDomains: true, preload: true }
     : false,
 
-  // No exponer tecnología usada
   hidePoweredBy: true,
-
-  // XSS Filter (legacy browsers)
   xssFilter: true,
-
-  // No exponer referrer al exterior
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-
-  // Permissions policy — denegar acceso a mic/cam/geolocation
   permittedCrossDomainPolicies: false,
 });

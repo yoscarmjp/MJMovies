@@ -75,7 +75,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       await api.post('/auth/logout')
     } catch {
-      // Ignorar errores en logout
     } finally {
       localStorage.removeItem('accessToken')
       set({ user: null, isLoggedIn: false, isAdmin: false })

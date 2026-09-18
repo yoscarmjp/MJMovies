@@ -1,13 +1,11 @@
 import { z } from 'zod';
 
-// Helpers reutilizables
 const safeString = (max = 255, min = 0, minMsg) => {
   let schema = z.string().trim();
   if (min > 0) schema = minMsg ? schema.min(min, minMsg) : schema.min(min);
   return schema.max(max).transform((s) => s.replace(/[<>]/g, ''));
 };
 
-// AUTH SCHEMAS
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().email('Email inválido').max(255).toLowerCase(),
@@ -31,7 +29,6 @@ export const loginSchema = z.object({
   }),
 });
 
-// MOVIE SCHEMAS
 export const createMovieSchema = z.object({
   body: z.object({
     title: safeString(255, 1, 'Título requerido'),
@@ -82,8 +79,6 @@ export const uuidParamSchema = z.object({
   }),
 });
 
-// REMOTE CONTROL SCHEMAS
-
 export const remoteCommandSchema = z.object({
   body: z.object({
     pairingCode: z.string().length(6, 'Código de 6 dígitos'),
@@ -95,9 +90,6 @@ export const remoteCommandSchema = z.object({
   }),
 });
 
-// VALIDATOR MIDDLEWARE FACTORY
-
-
 export function validate(schema) {
   return async (req, res, next) => {
     try {
@@ -107,7 +99,6 @@ export function validate(schema) {
         params: req.params,
       });
 
-      // Reemplazar con datos validados y sanitizados
       if (result.body) req.body = result.body;
       if (result.query) req.query = result.query;
       if (result.params) req.params = result.params;
@@ -116,7 +107,7 @@ export function validate(schema) {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errors = error.errors.map((e) => ({
-          field: e.path.slice(1).join('.'), // Remover 'body'/'query'/'params'
+          field: e.path.slice(1).join('.'),
           message: e.message,
         }));
         return res.status(400).json({

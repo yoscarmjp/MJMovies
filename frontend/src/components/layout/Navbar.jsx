@@ -18,7 +18,6 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
-  // Live search state
   const [liveResults, setLiveResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [showLiveDropdown, setShowLiveDropdown] = useState(false)
@@ -51,7 +50,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Búsqueda reactiva en vivo mientras escribe
   useEffect(() => {
     const q = searchQuery.trim()
     if (q.length < 2) {
@@ -87,10 +85,8 @@ export default function Navbar() {
           })),
         ]
 
-        // Filtrar elementos sin poster válido
         const withPoster = combined.filter((m) => m.poster && typeof m.poster === 'string' && m.poster.trim().length > 5)
 
-        // De-duplicar por título
         const seen = new Set()
         const unique = []
         for (const item of withPoster) {
@@ -113,7 +109,6 @@ export default function Navbar() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Cerrar dropdowns al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -127,7 +122,6 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Cerrar menús al cambiar de ruta
   useEffect(() => {
     setMobileMenuOpen(false)
     setShowUserDropdown(false)

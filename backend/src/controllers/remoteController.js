@@ -32,15 +32,12 @@ export function getLocalIpAddress() {
     }
   }
 
-  // 1. Preferir interfaces físicas en 192.168.* o 10.* (Wi-Fi o Ethernet)
   const best = candidates.find((c) => !c.isVirtual && c.isPreferredPrefix);
   if (best) return best.address;
 
-  // 2. Cualquier interfaz física válida
   const anyReal = candidates.find((c) => !c.isVirtual);
   if (anyReal) return anyReal.address;
 
-  // 3. Fallback
   if (candidates.length > 0) return candidates[0].address;
 
   return '127.0.0.1';
@@ -56,10 +53,8 @@ export async function createPairingCode(req, res, next) {
     const tvSessionId = crypto.randomBytes(16).toString('hex');
     const pairingCode = generatePairingCode();
 
-    // Expirar en 24 horas para mantener la vinculación activa
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Eliminar sesiones anteriores del mismo usuario
     await prisma.remoteSession.deleteMany({ where: { userId } });
 
     const session = await prisma.remoteSession.create({
@@ -71,7 +66,6 @@ export async function createPairingCode(req, res, next) {
     const serverUrl = `http://${lanIp}:${backendPort}`;
     const frontendUrl = `http://${lanIp}:3000`;
 
-    // Construir payload estructurado para escaneo con cámara (con IP real de red)
     const qrData = JSON.stringify({
       code: pairingCode,
       tvSessionId,
@@ -161,7 +155,6 @@ export async function sendCommand(req, res, next) {
       throw new AppError('Sesión de control remoto no encontrada', 404);
     }
 
-    // Emitir comando via Socket.io a la TV
     if (global.io) {
       global.io.to(`tv:${session.tvSessionId}`).emit('remote:command', {
         command,

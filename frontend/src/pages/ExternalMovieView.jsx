@@ -15,7 +15,6 @@ export default function ExternalMovieView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Series state
   const [activeSeason, setActiveSeason] = useState(1)
   const [episodes, setEpisodes] = useState([])
   const [loadingEpisodes, setLoadingEpisodes] = useState(false)

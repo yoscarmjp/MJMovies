@@ -5,12 +5,9 @@ import fs from 'fs';
 import { AppError } from './errorHandler.js';
 import { logger } from '../utils/logger.js';
 
-// Magic bytes para validar tipos de archivo reales
-// No confiamos en la extensión ni en el Content-Type del cliente
 const ALLOWED_VIDEO_MAGIC = {
-  // MP4 / M4V
   mp4: [
-    [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], // ftyp
+    [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70],
     [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
     [0x00, 0x00, 0x00, 0x1C, 0x66, 0x74, 0x79, 0x70],
     [0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70],
@@ -40,14 +37,12 @@ function isValidImageFile(buffer) {
   return checkMagicBytes(buffer, allMagic);
 }
 
-// Asegurar que directorios existen
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
 
-// Storage para videos
 const videoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const uploadDir = process.env.UPLOADS_DIR || './uploads';
@@ -55,13 +50,11 @@ const videoStorage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (_req, file, cb) => {
-    // Nombre aleatorio — nunca usar el nombre original del usuario (path traversal)
-    const ext = '.mp4'; // Siempre .mp4 independientemente de lo que diga el cliente
+    const ext = '.mp4'; 
     cb(null, `${uuidv4()}${ext}`);
   },
 });
 
-// Storage para posters
 const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const posterDir = process.env.POSTERS_DIR || './posters';
@@ -69,13 +62,11 @@ const imageStorage = multer.diskStorage({
     cb(null, posterDir);
   },
   filename: (_req, _file, cb) => {
-    cb(null, `${uuidv4()}.jpg`); // Siempre .jpg
+    cb(null, `${uuidv4()}.jpg`);
   },
 });
 
-// Filtro de archivos de video
 function videoFilter(_req, file, cb) {
-  // Solo aceptar tipos MIME de video (primera línea de defensa)
   const allowedMimes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
   if (!allowedMimes.includes(file.mimetype)) {
     logger.warn(`Upload bloqueado: MIME inválido ${file.mimetype} desde ${_req.ip}`);
@@ -84,7 +75,6 @@ function videoFilter(_req, file, cb) {
   cb(null, true);
 }
 
-// Filtro de imágenes
 function imageFilter(_req, file, cb) {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
   if (!allowedMimes.includes(file.mimetype)) {
@@ -100,8 +90,8 @@ export const uploadVideo = multer({
   fileFilter: videoFilter,
   limits: {
     fileSize: MAX_VIDEO_SIZE,
-    files: 1, // Solo 1 archivo por request
-    fields: 10, // Límite de campos del form
+    files: 1,
+    fields: 10, 
   },
 });
 
@@ -109,7 +99,7 @@ export const uploadPoster = multer({
   storage: imageStorage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB máximo para posters
+    fileSize: 10 * 1024 * 1024, 
     files: 1,
   },
 });
@@ -125,7 +115,6 @@ export async function validateVideoMagicBytes(req, res, next) {
     fs.closeSync(fd);
 
     if (!isValidVideoFile(buffer)) {
-      // Eliminar el archivo fraudulento
       fs.unlinkSync(req.file.path);
       logger.warn(`Magic bytes inválidos en upload desde ${req.ip}`);
       return next(new AppError('El archivo no es un video MP4 válido', 415));

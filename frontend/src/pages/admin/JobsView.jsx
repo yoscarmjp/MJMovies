@@ -14,7 +14,6 @@ export default function JobsView() {
       const { data } = await api.get('/admin/jobs');
       setJobs(data.jobs || []);
     } catch {
-      // ignore
     } finally {
       setLoading(false);
     }

@@ -7,13 +7,11 @@ export async function authenticate(req, _res, next) {
   try {
     let token = null;
 
-    // 1. Buscar en header Authorization: Bearer <token>
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     }
 
-    // 2. Buscar en cookie HttpOnly (más seguro)
     if (!token && req.cookies?.accessToken) {
       token = req.cookies.accessToken;
     }
@@ -22,10 +20,8 @@ export async function authenticate(req, _res, next) {
       throw new AuthError('Token de acceso requerido');
     }
 
-    // Verificar token
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
-    // Buscar usuario en DB (verificar que sigue activo)
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
@@ -94,7 +90,6 @@ export async function optionalAuth(req, _res, next) {
       }
     }
   } catch {
-    // Ignorar errores en auth opcional
   }
   next();
 }

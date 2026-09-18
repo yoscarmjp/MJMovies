@@ -47,8 +47,7 @@ const io = new SocketIOServer(httpServer, {
   pingInterval: 25000,
 });
 
-// MIDDLEWARE GLOBAL
-app.set('trust proxy', 1); // Necesario detrás de Nginx
+app.set('trust proxy', 1);
 app.use(corsMiddleware);
 app.use(securityMiddleware);
 app.use(compression());
@@ -61,7 +60,6 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use(requestLogger);
 
-// ARCHIVOS ESTÁTICOS — HLS Streams
 app.use('/streams', rateLimiter.stream, express.static(
   process.env.STREAMS_DIR || path.join(__dirname, '..', 'streams'),
   {
@@ -85,15 +83,12 @@ app.use('/posters', express.static(
   { maxAge: '7d' }
 ));
 
-// RUTAS API
 app.use('/api/auth', rateLimiter.auth, authRouter);
 app.use('/api/movies', rateLimiter.api, moviesRouter);
 app.use('/api/admin', rateLimiter.api, adminRouter);
 app.use('/api/remote', rateLimiter.api, remoteRouter);
 app.use('/api/stream', rateLimiter.api, streamRouter);
 app.use('/api/external-movies', rateLimiter.api, externalMoviesRouter);
-
-// Health check
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',

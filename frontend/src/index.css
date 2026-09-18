@@ -38,7 +38,6 @@
     color-scheme: dark;
   }
 
-  /* Autofill para tema oscuro en navegadores WebKit/Chromium */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,

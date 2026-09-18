@@ -44,7 +44,6 @@ function createLimiter({
 }
 
 export const rateLimiter = {
-  // Auth: límite estricto para prevenir brute force (relajado en dev)
   auth: createLimiter({
     windowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || '900000'),
     max: process.env.NODE_ENV === 'production' ? parseInt(process.env.LOGIN_RATE_LIMIT_MAX || '5') : 100,
@@ -69,7 +68,7 @@ export const rateLimiter = {
 
   stream: createLimiter({
     windowMs: 60000,
-    max: 500, // Un video puede pedir muchos .ts segments por minuto
+    max: 500,
     message: 'Límite de streaming excedido.',
     keyPrefix: 'stream',
   }),

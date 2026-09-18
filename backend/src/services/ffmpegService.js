@@ -34,7 +34,6 @@ export async function transcodeToHLS(inputPath, movieId, onProgress) {
   const videoInfo = await getVideoInfo(inputPath);
   logger.info(`Iniciando transcode: ${movieId} (${videoInfo.width}x${videoInfo.height})`);
 
-  // Determinar calidades disponibles según resolución original
   const qualities = [
     { name: '360p', height: 360, bitrate: '500k', audioBitrate: '96k' },
   ];
@@ -46,12 +45,10 @@ export async function transcodeToHLS(inputPath, movieId, onProgress) {
     qualities.push({ name: '1080p', height: 1080, bitrate: '4500k', audioBitrate: '192k' });
   }
 
-  // Transcodificar cada calidad
   for (const quality of qualities) {
     await transcodeQuality(inputPath, outputDir, quality, movieId, onProgress);
   }
 
-  // Generar master playlist adaptativa
   const masterPlaylist = generateMasterPlaylist(qualities, movieId);
   fs.writeFileSync(path.join(outputDir, 'master.m3u8'), masterPlaylist);
 
@@ -73,10 +70,10 @@ function transcodeQuality(inputPath, outputDir, quality, movieId, onProgress) {
 
     ffmpeg(inputPath)
       .outputOptions([
-        `-vf scale=-2:${quality.height}`, // Escalar manteniendo aspect ratio
+        `-vf scale=-2:${quality.height}`,
         '-c:v libx264',
-        '-preset fast',               // Balance velocidad/calidad
-        '-profile:v baseline',        // Máxima compatibilidad
+        '-preset fast',               
+        '-profile:v baseline',        
         '-level 3.0',
         `-b:v ${quality.bitrate}`,
         `-maxrate ${quality.bitrate}`,
@@ -86,7 +83,7 @@ function transcodeQuality(inputPath, outputDir, quality, movieId, onProgress) {
         '-ar 44100',
         '-ac 2',
         '-f hls',
-        '-hls_time 6',               // Segmentos de 6 segundos
+        '-hls_time 6',              
         '-hls_playlist_type vod',
         '-hls_segment_type mpegts',
         `-hls_segment_filename ${segmentPattern}`,

@@ -6,7 +6,7 @@ const memoryCache = new Map();
 
 export async function connectRedis() {
   if (process.env.REDIS_ENABLED === 'false') {
-    logger.info('ℹ️ Redis deshabilitado por configuración. Usando caché en memoria.');
+    logger.info('Redis deshabilitado por configuración. Usando caché en memoria.');
     return null;
   }
 
@@ -16,7 +16,7 @@ export async function connectRedis() {
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD || undefined,
       retryStrategy: (times) => {
-        if (times > 2) return null; // Detener reintentos si no hay servidor Redis
+        if (times > 2) return null;
         return Math.min(times * 100, 1000);
       },
       maxRetriesPerRequest: 1,
@@ -26,7 +26,6 @@ export async function connectRedis() {
     });
 
     client.on('error', (err) => {
-      // Registrar como advertencia sin crashear el proceso
       logger.warn(`Redis notice: ${err.message}`);
     });
 
@@ -36,7 +35,7 @@ export async function connectRedis() {
     logger.info('Redis conectado');
     return redisClient;
   } catch (error) {
-    logger.warn(`⚠️ Redis no disponible (${error.message}). Continuando con modo en memoria.`);
+    logger.warn(`Redis no disponible (${error.message}). Continuando con modo en memoria.`);
     redisClient = null;
     return null;
   }
@@ -46,7 +45,6 @@ export function getRedis() {
   return redisClient;
 }
 
-// Cache helpers con fallback en memoria
 export const cache = {
   async get(key) {
     try {
@@ -77,7 +75,6 @@ export const cache = {
         expiresAt: Date.now() + ttlSeconds * 1000,
       });
     } catch {
-      // Fail silently
     }
   },
 
@@ -89,7 +86,6 @@ export const cache = {
       }
       memoryCache.delete(key);
     } catch {
-      // Fail silently
     }
   },
 
@@ -109,7 +105,6 @@ export const cache = {
         }
       }
     } catch {
-      // Fail silently
     }
   },
 };

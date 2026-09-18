@@ -44,7 +44,6 @@ export default function MoviesView() {
     fetchMovies();
   }, [page, statusFilter]);
 
-  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchMovies(true);

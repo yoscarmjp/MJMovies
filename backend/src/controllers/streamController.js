@@ -1,7 +1,6 @@
 import { prisma } from '../config/database.js';
 import * as movieApi from '../services/movieApiService.js';
 
-// Mapeo de slugs locales populares a sus IDs de TMDB y tipo
 const POPULAR_TMDB_MAP = {
   'the-last-of-us': { tmdbId: 100088, mediaType: 'tv', seasons: 1 },
   'stranger-things': { tmdbId: 66732, mediaType: 'tv', seasons: 4 },
@@ -24,7 +23,7 @@ export async function getStreamUrl(req, res, next) {
     const { movieId } = req.params;
     const season = parseInt(req.query.season || '1', 10);
     const episode = parseInt(req.query.episode || '1', 10);
-    const requestedType = req.query.type; // 'movie' | 'tv'
+    const requestedType = req.query.type;
 
     let title = 'Película';
     let tmdbId = null;
@@ -32,7 +31,6 @@ export async function getStreamUrl(req, res, next) {
     let localStreamPath = null;
     let numberOfSeasons = 1;
 
-    // 1. Intentar buscar en MySQL local
     const localMovie = await prisma.movie.findUnique({
       where: { id: movieId },
       include: {
@@ -44,7 +42,6 @@ export async function getStreamUrl(req, res, next) {
       title = localMovie.title;
       localStreamPath = localMovie.streamPath;
 
-      // Detectar si es serie por género o slug
       const hasSeriesGenre = localMovie.genres?.some((g) => g.genre?.slug === 'series');
       const mapEntry = POPULAR_TMDB_MAP[localMovie.slug];
 
@@ -56,7 +53,6 @@ export async function getStreamUrl(req, res, next) {
         isTv = true;
       }
     } else {
-      // 2. Si no está en MySQL, verificar si es ID de TMDB numérico o slug
       const parsedId = parseInt(movieId, 10);
       if (!isNaN(parsedId)) {
         tmdbId = parsedId;
@@ -69,7 +65,6 @@ export async function getStreamUrl(req, res, next) {
       }
     }
 
-    // Fallback de tmdbId si aún no se tiene
     if (!tmdbId) {
       const lower = (localMovie?.title || movieId).toLowerCase();
       for (const [key, val] of Object.entries(POPULAR_TMDB_MAP)) {
@@ -82,16 +77,12 @@ export async function getStreamUrl(req, res, next) {
       }
     }
 
-    // Si aún no tenemos tmdbId, usar un ID por defecto para que los servidores funcionen
     const effectiveTmdbId = tmdbId || 27205;
 
-    // Idioma seleccionado (por defecto 'es')
     const requestedLang = (req.query.lang || 'es').toLowerCase();
     const isEn = requestedLang.startsWith('en');
     const langCode = isEn ? 'en' : 'es';
-    const langLabel = isEn ? 'English' : 'Español / Latino';
 
-    // Construir servidores de reproducción reales
     let servers = [];
     if (isTv) {
       if (langCode === 'es') {

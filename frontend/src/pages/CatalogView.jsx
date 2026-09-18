@@ -35,10 +35,7 @@ export default function CatalogView() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
-  // useRef para appendMode: evita closure stale dentro de useEffect
   const appendModeRef = useRef(false)
-
-  // Params
   const currentQuery = searchParams.get('q') || ''
   const currentType = searchParams.get('type') || ''
   const currentGenre = searchParams.get('genre') || ''
@@ -48,17 +45,14 @@ export default function CatalogView() {
   const currentSort = searchParams.get('sort') || 'popular'
   const currentFormat = searchParams.get('format') || ''
   const currentCategory = searchParams.get('category') || 'all'
-
   const [searchInput, setSearchInput] = useState(currentQuery)
 
-  // Cargar géneros
   useEffect(() => {
     api.get('/movies/genres')
       .then((res) => setGenres(res.data.genres || []))
       .catch(() => {})
   }, [])
 
-  // Búsqueda en vivo reactiva con debounce de 280ms
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== currentQuery) {
@@ -75,7 +69,6 @@ export default function CatalogView() {
     return () => clearTimeout(timer)
   }, [searchInput])
 
-  // Helper para validar portadas
   const hasValidPoster = (item) => {
     if (!item) return false
     const url = item.posterUrl || item.poster_path || item.backdropUrl || item.backdrop_path
@@ -84,7 +77,6 @@ export default function CatalogView() {
     return clean.length > 5 && !clean.includes('dqK9Hag1054tghRQSqLSPoY2fgn') && !clean.includes('7u3DUTNuLhvJRlZ9qn5gqMxgf8w')
   }
 
-  // Cargar catálogo dual con filtros integrados
   useEffect(() => {
     let isMounted = true
     const isAppend = appendModeRef.current
@@ -187,7 +179,6 @@ export default function CatalogView() {
             setTotalCount(pag.total || pag.count || raw.length)
           }
         } else if (currentCategory === 'cinema' || currentCategory === 'estrenos') {
-          // Trending / Estrenos TMDB
           const res = await api.get('/external-movies/movies/trending', {
             params: { page, ...filterParams },
           })
@@ -209,7 +200,6 @@ export default function CatalogView() {
             setTotalCount(realTotalResults)
           }
         } else if (currentCategory === 'top' || currentCategory === 'awards') {
-          // Top rated TMDB
           const res = await api.get('/external-movies/movies/top-rated', {
             params: { page, ...filterParams, rating: currentRating || '8.0', sort: currentSort || 'rating' },
           })
@@ -231,7 +221,6 @@ export default function CatalogView() {
             setTotalCount(realTotalResults)
           }
         } else if (currentType === 'tv') {
-          // Series populares TMDB
           const res = await api.get('/external-movies/series/popular', {
             params: { page, ...filterParams },
           })
@@ -253,7 +242,6 @@ export default function CatalogView() {
             setTotalCount(realTotalResults)
           }
         } else {
-          // Modo default / Todos / Películas
           const [localRes, extRes] = await Promise.allSettled([
             page === 1 ? api.get('/movies', { params: { ...localParams, limit: 12 } }) : Promise.resolve({ data: { movies: [], pagination: {} } }),
             api.get('/external-movies/movies/popular', { params: { page, ...filterParams } }),
@@ -307,7 +295,6 @@ export default function CatalogView() {
     return () => {
       isMounted = false
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuery, currentType, currentGenre, currentOrigin, currentCategory, currentYear, currentRating, currentSort, currentFormat, page])
 
   const setParam = (key, val) => {

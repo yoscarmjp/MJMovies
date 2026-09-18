@@ -13,7 +13,6 @@ export function TvRemoteProvider({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Estado de la sesión TV y emparejamiento
   const [tvSessionId, setTvSessionId] = useState(() => localStorage.getItem('mjmovies_tv_session_id') || null);
   const [pairingCode, setPairingCode] = useState(null);
   const currentHost = typeof window !== 'undefined' ? (window.location.hostname || 'localhost') : 'localhost';
@@ -25,11 +24,9 @@ export function TvRemoteProvider({ children }) {
   const [expiresAt, setExpiresAt] = useState(null);
   const [remoteConnected, setRemoteConnected] = useState(false);
 
-  // HUD visual feedback al recibir comandos del control
   const [hudMessage, setHudMessage] = useState(null);
   const hudTimeoutRef = useRef(null);
 
-  // Referencias de navegación espacial
   const socketRef = useRef(null);
   const focusedElementRef = useRef(null);
   const isNavigatingRef = useRef(false);
@@ -42,10 +39,8 @@ export function TvRemoteProvider({ children }) {
     }, 2000);
   };
 
-  // Helper para resaltar visualmente el elemento enfocado (Estilo Netflix)
   const applyFocusStyle = useCallback((el) => {
     if (!el) return;
-    // Remover estilo del anterior
     if (focusedElementRef.current && focusedElementRef.current !== el) {
       focusedElementRef.current.classList.remove(
         'ring-4',
@@ -69,7 +64,6 @@ export function TvRemoteProvider({ children }) {
       'tv-focused'
     );
 
-    // Scroll suave para mantener a la vista en la pantalla
     try {
       el.scrollIntoView({
         behavior: 'smooth',
@@ -96,9 +90,7 @@ export function TvRemoteProvider({ children }) {
     }
   }, []);
 
-  // Obtener elementos navegables en la pantalla actual
   const getNavigableElements = useCallback(() => {
-    // Si hay un modal abierto (como Temporadas y Episodios o QR), navegar SOLO dentro del modal
     const activeModal = document.querySelector('[data-modal-container], [role="dialog"], .z-\\[100\\]');
     const container = activeModal || document;
 
@@ -114,7 +106,6 @@ export function TvRemoteProvider({ children }) {
     const all = Array.from(container.querySelectorAll(selector));
 
     return all.filter((el) => {
-      // Excluir elementos invisibles u ocultos
       if (!el.offsetParent && el.offsetWidth === 0 && el.offsetHeight === 0) return false;
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return false;
@@ -124,7 +115,6 @@ export function TvRemoteProvider({ children }) {
     });
   }, []);
 
-  // Navegación espacial D-Pad (▲, ▼, ◀, ▶) estilo Netflix
   const handleDirectionalNav = useCallback((direction) => {
     isNavigatingRef.current = true;
     const elements = getNavigableElements();
@@ -132,12 +122,10 @@ export function TvRemoteProvider({ children }) {
 
     const current = focusedElementRef.current;
 
-    // Si el elemento previamente enfocado ya no existe o está fuera del modal activo
     const activeModal = document.querySelector('[data-modal-container], [role="dialog"], .z-\\[100\\]');
     const isCurrentInActiveModal = !activeModal || (current && activeModal.contains(current));
 
     if (!current || !document.body.contains(current) || !isCurrentInActiveModal) {
-      // Enfocar primer ítem del modal o primera película/botón visible
       const firstTarget = elements[0];
       applyFocusStyle(firstTarget);
       showHud('🎮 Navegación Remota');
@@ -195,7 +183,6 @@ export function TvRemoteProvider({ children }) {
       }
 
       if (isValidDirection) {
-        // Ponderar distancia primaria vs secundaria para favorecer alineación
         const score = primaryDist + secondaryDist * 2.5;
         if (score < minScore) {
           minScore = score;
@@ -209,7 +196,6 @@ export function TvRemoteProvider({ children }) {
     }
   }, [getNavigableElements, applyFocusStyle]);
 
-  // Selección (Botón OK)
   const handleSelect = useCallback((fromSocket = false) => {
     const current = focusedElementRef.current;
     const playBtn = document.querySelector('[data-nav-item="player-play"]');
@@ -218,7 +204,6 @@ export function TvRemoteProvider({ children }) {
     const isPlayerActive = !!document.querySelector('[data-player-container]') || !!video || !!iframe;
     const isInsideModal = current && (current.closest('[role="dialog"]') || current.closest('[data-modal]'));
 
-    // 1. Si hay un elemento enfocado dentro de un modal o es un input
     if (current && document.body.contains(current) && (isInsideModal || current.tagName === 'INPUT')) {
       showHud('✓ Seleccionado');
       current.click();
@@ -228,21 +213,18 @@ export function TvRemoteProvider({ children }) {
       return;
     }
 
-    // 2. Si no estamos en el reproductor y hay un elemento enfocado
     if (!isPlayerActive && current && document.body.contains(current)) {
       showHud('✓ Seleccionado');
       current.click();
       return;
     }
 
-    // 3. Si hay un botón explícito de play
     if (playBtn && !iframe) {
       showHud('▶ Iniciar');
       playBtn.click();
       return;
     }
 
-    // 4. Si hay un video nativo activo
     if (video) {
       if (video.paused) {
         video.play().catch(() => {});
@@ -254,7 +236,6 @@ export function TvRemoteProvider({ children }) {
       return;
     }
 
-    // 5. Si estamos en el reproductor (iframe o general)
     if (!fromSocket) {
       window.dispatchEvent(
         new CustomEvent('mjmovies:remote_command', {
@@ -265,9 +246,7 @@ export function TvRemoteProvider({ children }) {
     showHud('▶ Reproducir / Pausa');
   }, [showHud]);
 
-  // Volver (Botón Volver)
   const handleBack = useCallback(() => {
-    // Si hay un modal visible con botón de cerrar, cerrarlo primero
     const modalCloseBtn = document.querySelector('[data-modal-close], .modal-close-btn');
     if (modalCloseBtn) {
       showHud('Cerrar Ventana');
@@ -276,19 +255,17 @@ export function TvRemoteProvider({ children }) {
       return;
     }
 
-    showHud('↩ Volver');
+    showHud('Volver');
     clearFocusStyle();
     window.history.back();
   }, [clearFocusStyle]);
 
-  // Inicio (Botón Home)
   const handleHome = useCallback(() => {
-    showHud('🏠 Inicio');
+    showHud('Inicio');
     clearFocusStyle();
     navigate('/');
   }, [clearFocusStyle, navigate]);
 
-  // Búsqueda remota estilo Netflix
   const handleSearch = useCallback((query) => {
     showHud(`🔍 Buscando: "${query || ''}"`);
     clearFocusStyle();
@@ -306,12 +283,10 @@ export function TvRemoteProvider({ children }) {
     }
   }, [clearFocusStyle, navigate, applyFocusStyle]);
 
-  // Limpiar foco al cambiar de ruta
   useEffect(() => {
     clearFocusStyle();
   }, [location.pathname, clearFocusStyle]);
 
-  // Inicializar o refrescar sesión de emparejamiento con el backend
   const refreshPairing = useCallback(async () => {
     if (!isLoggedIn) return;
 
@@ -336,7 +311,6 @@ export function TvRemoteProvider({ children }) {
     }
   }, [isLoggedIn]);
 
-  // Consultar sesión activa al montar
   useEffect(() => {
     if (!isLoggedIn) return;
 
@@ -359,7 +333,6 @@ export function TvRemoteProvider({ children }) {
           if (data.session.qrCode) setQrCode(data.session.qrCode);
           localStorage.setItem('mjmovies_tv_session_id', data.session.tvSessionId);
         } else {
-          // Generar nueva sesión limpia
           refreshPairing();
         }
       })
@@ -372,9 +345,7 @@ export function TvRemoteProvider({ children }) {
     };
   }, [isLoggedIn, refreshPairing]);
 
-  // Conexión permanente de Socket.io del TV
   useEffect(() => {
-    // Conectar directamente al backend (puerto 5000) en el mismo host del navegador
     const currentHost = (typeof window !== 'undefined' && window.location.hostname) ? window.location.hostname : 'localhost';
     const targetSocketUrl = `http://${currentHost}:5000`;
 
@@ -388,7 +359,6 @@ export function TvRemoteProvider({ children }) {
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      // Registrar TV explícitamente en la sala
       socket.emit('tv:join', { sessionId: tvSessionId });
     });
 
@@ -403,12 +373,10 @@ export function TvRemoteProvider({ children }) {
       showHud('📱 Control Remoto Desconectado');
     });
 
-    // Despacho de comandos desde el control móvil
     socket.on('remote:command', ({ command, payload }) => {
       const p = payload || {};
       const video = document.querySelector('video');
 
-      // Notificar a listeners locales (como PlayerView)
       window.dispatchEvent(
         new CustomEvent('mjmovies:remote_command', {
           detail: { command, payload: p },
@@ -504,7 +472,6 @@ export function TvRemoteProvider({ children }) {
     };
   }, [tvSessionId, handleDirectionalNav, handleSelect, handleBack, handleHome, handleSearch, toastSuccess]);
 
-  // Enviar estado de reproducción hacia el control remoto
   const sendPlayerState = useCallback((state) => {
     if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit('player:state', state);

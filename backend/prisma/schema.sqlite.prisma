@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  role         String   @default("USER")
+  isActive     Boolean  @default(true) @map("is_active")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  refreshTokens RefreshToken[]
+  watchHistory  WatchHistory[]
+  remoteSessions RemoteSession[]
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Movie {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  description    String?
+  year           Int?
+  duration       Int?          
+  rating         Decimal?
+  director       String?
+  cast           String?       
+  posterUrl      String?       @map("poster_url")
+  backdropUrl    String?       @map("backdrop_url")
+  trailerUrl     String?       @map("trailer_url")
+  streamPath     String?       @map("stream_path") 
+  originalFile   String?       @map("original_file")
+  fileSize       BigInt?       @map("file_size")
+  status         String        @default("PENDING")
+  featured       Boolean       @default(false)
+  views          Int           @default(0)
+  language       String?       @default("es")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  genres         MovieGenre[]
+  transcodeJobs  TranscodeJob[]
+  watchHistory   WatchHistory[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([featured])
+  @@map("movies")
+}
+
+model Genre {
+  id     String       @id @default(uuid())
+  name   String       @unique
+  slug   String       @unique
+  movies MovieGenre[]
+
+  @@map("genres")
+}
+
+model MovieGenre {
+  movieId String @map("movie_id")
+  genreId String @map("genre_id")
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, genreId])
+  @@map("movie_genres")
+}
+
+model TranscodeJob {
+  id          String    @id @default(uuid())
+  movieId     String    @map("movie_id")
+  status      String    @default("QUEUED")
+  progress    Int       @default(0)
+  quality     String?
+  errorMsg    String?   @map("error_msg")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@index([movieId])
+  @@index([status])
+  @@map("transcode_jobs")
+}
+
+model WatchHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  movieId   String   @map("movie_id")
+  position  Int      @default(0)
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@index([userId])
+  @@map("watch_history")
+}
+
+model RemoteSession {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  tvSessionId String   @map("tv_session_id")
+  socketId    String?  @map("socket_id")
+  pairingCode String   @map("pairing_code")
+  isConnected Boolean  @default(false) @map("is_connected")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([pairingCode])
+  @@index([tvSessionId])
+  @@map("remote_sessions")
+}

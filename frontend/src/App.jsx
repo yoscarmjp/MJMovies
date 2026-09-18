@@ -6,14 +6,10 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-
-// Components
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ToastContainer from './components/ui/ToastContainer';
 import { TvRemoteProvider } from './context/TvRemoteContext';
-
-// Pages
 import HomeView from './pages/HomeView';
 import CatalogView from './pages/CatalogView';
 import MovieView from './pages/MovieView';
@@ -23,8 +19,6 @@ import ProfileView from './pages/ProfileView';
 import LoginView from './pages/LoginView';
 import RegisterView from './pages/RegisterView';
 import NotFoundView from './pages/NotFoundView';
-
-// Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
 import DashboardView from './pages/admin/DashboardView';
 import MoviesView from './pages/admin/MoviesView';
@@ -32,7 +26,6 @@ import UploadView from './pages/admin/UploadView';
 import UsersView from './pages/admin/UsersView';
 import JobsView from './pages/admin/JobsView';
 
-// Scroll to top helper
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -41,7 +34,6 @@ function ScrollToTop() {
   return null;
 }
 
-// Route Guard: Protected (User)
 function ProtectedRoute({ children }) {
   const { isLoggedIn, initialized } = useAuthStore();
   const location = useLocation();
@@ -61,7 +53,6 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-// Route Guard: Admin only
 function AdminRoute({ children }) {
   const { isLoggedIn, isAdmin, initialized } = useAuthStore();
   const location = useLocation();
@@ -116,7 +107,6 @@ export default function App() {
   useEffect(() => {
     initialize();
 
-    // Keyboard TV navigation helper
     const handleKeyDown = (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
         document.body.classList.add('keyboard-nav');

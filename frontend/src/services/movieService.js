@@ -1,7 +1,6 @@
 import api from './api.js';
 
 export const movieService = {
-  // Catálogo local
   getMovies(params = {}) {
     return api.get('/movies', { params });
   },
@@ -18,7 +17,6 @@ export const movieService = {
     return api.get('/movies/search', { params: { q: query } });
   },
 
-  // APIs Externas de Películas (TMDB / Open Movies)
   getExternalTrending(timeWindow = 'week') {
     return api.get('/external-movies/trending', { params: { timeWindow } });
   },

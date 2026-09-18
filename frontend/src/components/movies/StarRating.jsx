@@ -9,7 +9,6 @@ export default function StarRating({ movieId, initialRating = 0, title = 'Pelíc
   const [currentAvg, setCurrentAvg] = useState(Number(initialRating) || 0)
   const [votesCount, setVotesCount] = useState(12)
 
-  // Cargar voto previo del usuario si existe
   useEffect(() => {
     if (!movieId) return
     try {
@@ -32,7 +31,6 @@ export default function StarRating({ movieId, initialRating = 0, title = 'Pelíc
       localStorage.setItem(`mjmovies_user_rating_${movieId}`, score.toString())
     } catch {}
 
-    // Recalcular el promedio de estrellas ponderado
     const newCount = userRating ? votesCount : votesCount + 1
     setVotesCount(newCount)
     const recalculated = ((currentAvg * votesCount + score) / (votesCount + 1)).toFixed(1)

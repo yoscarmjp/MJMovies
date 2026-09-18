@@ -13,8 +13,6 @@ function generateSlug(title) {
   return slugify(title, { lower: true, strict: true }) + '-' + Date.now();
 }
 
-// MOVIES
-
 export async function getAdminMovies(req, res, next) {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -59,12 +57,10 @@ export async function uploadMovie(req, res, next) {
 
     const { title, description, year, director, rating, language, genres, cast, featured } = req.body;
 
-    // Obtener metadata del video
     let videoInfo = {};
     try {
       videoInfo = await getVideoInfo(req.file.path);
     } catch {
-      // Si falla ffprobe, no es crítico para crear el registro
     }
 
     const movie = await prisma.movie.create({
@@ -84,7 +80,6 @@ export async function uploadMovie(req, res, next) {
       },
     });
 
-    // Conectar géneros si se especificaron
     if (genres && genres.length > 0) {
       const genreIds = Array.isArray(genres) ? genres : [genres];
       await prisma.movieGenre.createMany({
@@ -93,19 +88,16 @@ export async function uploadMovie(req, res, next) {
       });
     }
 
-    // Crear registro de job de transcodificación
     const transcodeJob = await prisma.transcodeJob.create({
       data: { movieId: movie.id, status: 'QUEUED' },
     });
 
-    // Encolar transcodificación (no bloquear la respuesta)
     const queue = getTranscodeQueue();
     await queue.add(
       { movieId: movie.id, inputPath: req.file.path, jobId: transcodeJob.id },
       { jobId: transcodeJob.id }
     );
 
-    // Invalidar caché del catálogo
     await cache.delPattern('movies:list:*');
 
     logger.info(`Película creada y encolada: ${movie.id} - "${title}"`);
@@ -116,7 +108,6 @@ export async function uploadMovie(req, res, next) {
       job: { id: transcodeJob.id, status: 'QUEUED' },
     });
   } catch (error) {
-    // Limpiar archivo si hubo error
     if (req.file?.path && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
@@ -145,7 +136,6 @@ export async function updateMovie(req, res, next) {
 
     await prisma.movie.update({ where: { id }, data: updateData });
 
-    // Actualizar géneros
     if (genres !== undefined) {
       await prisma.movieGenre.deleteMany({ where: { movieId: id } });
       if (genres.length > 0) {
@@ -176,7 +166,6 @@ export async function uploadPosterHandler(req, res, next) {
       throw new NotFoundError('Película');
     }
 
-    // Eliminar poster anterior
     if (movie.posterUrl) {
       const oldPath = path.join(process.env.POSTERS_DIR || './posters', path.basename(movie.posterUrl));
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
@@ -199,10 +188,8 @@ export async function deleteMovie(req, res, next) {
     const movie = await prisma.movie.findUnique({ where: { id } });
     if (!movie) throw new NotFoundError('Película');
 
-    // Eliminar de DB (cascade elimina jobs, history, etc.)
     await prisma.movie.delete({ where: { id } });
 
-    // Eliminar archivos (en background)
     deleteMovieFiles(id, movie.originalFile);
 
     await cache.del(`movie:${id}`);
@@ -213,8 +200,6 @@ export async function deleteMovie(req, res, next) {
     next(error);
   }
 }
-
-// USERS
 
 export async function getUsers(req, res, next) {
   try {
@@ -255,7 +240,6 @@ export async function updateUserRole(req, res, next) {
       throw new AppError('Rol inválido', 400);
     }
 
-    // No permitir que un admin se quite su propio rol
     if (id === req.user.id && role !== 'ADMIN') {
       throw new AppError('No puedes cambiar tu propio rol', 403);
     }
@@ -285,7 +269,6 @@ export async function toggleUserStatus(req, res, next) {
   }
 }
 
-// STATS
 
 export async function getStats(req, res, next) {
   try {
@@ -333,13 +316,11 @@ export async function retranscodeMovie(req, res, next) {
       throw new AppError('El archivo de video original no está disponible en el servidor para retranscodificar', 400);
     }
 
-    // Actualizar estado de la película a PENDING
     await prisma.movie.update({
       where: { id },
       data: { status: 'PENDING' },
     });
 
-    // Crear nuevo job en estado QUEUED
     const transcodeJob = await prisma.transcodeJob.create({
       data: { movieId: movie.id, status: 'QUEUED' },
     });

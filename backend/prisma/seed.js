@@ -22,9 +22,8 @@ const genres = [
 ];
 
 async function main() {
-  console.log('🌱 Seeding MJMovies database...');
+  console.log('Seeding MJMovies database...');
 
-  // Crear géneros
   for (const genre of genres) {
     await prisma.genre.upsert({
       where: { slug: genre.slug },
@@ -34,7 +33,6 @@ async function main() {
   }
   console.log(`${genres.length} géneros creados`);
 
-  // Crear admin
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@MJMovies2024!';
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 

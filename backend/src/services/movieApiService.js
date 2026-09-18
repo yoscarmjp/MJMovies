@@ -6,7 +6,6 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const DEFAULT_WORKING_STREAM = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
 
-// Catálogo fallback de películas populares reales
 const FALLBACK_MOVIES = [
   {
     id: 27205,
@@ -130,7 +129,6 @@ const FALLBACK_MOVIES = [
   }
 ];
 
-// Catálogo fallback de SERIES populares reales
 const FALLBACK_SERIES = [
   {
     id: 1396,
@@ -318,7 +316,6 @@ async function tmdbFetch(endpoint, params = {}) {
   }
 }
 
-// Mapeo de slugs locales a IDs de género TMDB
 const TMDB_GENRE_MAP_MOVIE = {
   accion: 28,
   aventura: 12,
@@ -420,8 +417,6 @@ function filterFallbackItems(items, { genre, year, rating, sort } = {}, type = '
 
   return list;
 }
-
-// PELÍCULAS
 
 export async function getPopularMovies(page = 1, filters = {}) {
   const { genre, year, rating, sort } = filters;
@@ -527,8 +522,6 @@ export async function getTopRatedMovies(page = 1, filters = {}) {
   return getPopularMovies(page, effectiveFilters);
 }
 
-// SERIES (TV SHOWS)
-
 export async function getPopularSeries(page = 1, filters = {}) {
   const { genre, year, rating, sort } = filters;
   const hasFilters = genre || year || rating || (sort && sort !== 'popular');
@@ -632,8 +625,6 @@ export async function getTopRatedSeries(page = 1, filters = {}) {
   const effectiveFilters = { ...filters, rating: filters.rating || '8.0', sort: filters.sort || 'rating' };
   return getPopularSeries(page, effectiveFilters);
 }
-
-// COMBINADOS (PELÍCULAS + SERIES)
 
 export async function getTrendingAll(timeWindow = 'week') {
   const data = await tmdbFetch(`/trending/all/${timeWindow}`);
@@ -778,7 +769,6 @@ export async function getExternalDetails(tmdbId, mediaType = 'movie') {
     }, mediaType);
   }
 
-  // Fallback lookup
   const localList = mediaType === 'tv' ? FALLBACK_SERIES : FALLBACK_MOVIES;
   const local = localList.find((x) => x.id === parseInt(tmdbId, 10));
   if (local) {
@@ -788,7 +778,6 @@ export async function getExternalDetails(tmdbId, mediaType = 'movie') {
   return null;
 }
 
-// Catálogo de episodios fallback para series populares
 const FALLBACK_EPISODES = {
   // The Last of Us (TMDB 100088)
   100088: {
@@ -876,7 +865,6 @@ export async function getSeriesSeasonEpisodes(tmdbId, seasonNumber = 1) {
   const sNum = parseInt(seasonNumber, 10) || 1;
   const tId = parseInt(tmdbId, 10);
 
-  // 1. Intentar obtener desde la API oficial de TMDB si hay key
   try {
     const data = await tmdbFetch(`/tv/${tmdbId}/season/${sNum}`);
     if (data && data.episodes && data.episodes.length > 0) {
@@ -901,7 +889,6 @@ export async function getSeriesSeasonEpisodes(tmdbId, seasonNumber = 1) {
     logger.warn(`Error al consultar TMDB season ${sNum} para ${tmdbId}: ${err.message}`);
   }
 
-  // 2. Buscar en el catálogo fallback enriquecido
   const seriesEpisodes = FALLBACK_EPISODES[tId]?.[sNum];
   if (seriesEpisodes) {
     return {
@@ -922,7 +909,6 @@ export async function getSeriesSeasonEpisodes(tmdbId, seasonNumber = 1) {
     };
   }
 
-  // 3. Fallback genérico realista para cualquier otra serie / temporada (8-10 episodios)
   const count = sNum === 1 ? 9 : 8;
   const generatedEpisodes = [];
   for (let i = 1; i <= count; i++) {
@@ -946,8 +932,6 @@ export async function getSeriesSeasonEpisodes(tmdbId, seasonNumber = 1) {
     episodes: generatedEpisodes,
   };
 }
-
-// IMPORTACIÓN A MYSQL LOCAL
 
 export async function importToDatabase(tmdbId, mediaType = 'movie') {
   const details = await getExternalDetails(tmdbId, mediaType);
@@ -977,7 +961,6 @@ export async function importToDatabase(tmdbId, mediaType = 'movie') {
     }
   }
 
-  // Si es serie, añadir el género "Serie" automáticamente
   if (mediaType === 'tv') {
     const serieGenre = await prisma.genre.upsert({
       where: { slug: 'series' },
@@ -1002,7 +985,7 @@ export async function importToDatabase(tmdbId, mediaType = 'movie') {
       posterUrl: details.posterUrl,
       backdropUrl: details.backdropUrl,
       trailerUrl: details.trailerUrl,
-      streamPath: DEFAULT_WORKING_STREAM, // Siempre garantizar reproducción inmediata
+      streamPath: DEFAULT_WORKING_STREAM,
       status: 'READY',
       featured: details.rating >= 8.0,
       views: Math.floor(Math.random() * 800) + 100,

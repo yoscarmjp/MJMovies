@@ -35,23 +35,15 @@ import {
 export default function ProfileView() {
   const { user } = useAuthStore();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToastStore();
-
-  // Navigation tab state (3 tabs limpios)
-  const [activeTab, setActiveTab] = useState('history'); // 'history' | 'security' | 'remote'
-
-  // Avatar state
+  const [activeTab, setActiveTab] = useState('history'); 
   const [avatarUrl, setAvatarUrl] = useState(() => {
     return localStorage.getItem('mjmovies_user_avatar') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
   });
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [customAvatarInput, setCustomAvatarInput] = useState('');
-
-  // History & Filter state
   const [history, setHistory] = useState([]);
-  const [historyFilter, setHistoryFilter] = useState('all'); // 'all' | 'progress' | 'completed'
+  const [historyFilter, setHistoryFilter] = useState('all');
   const [loadingHistory, setLoadingHistory] = useState(true);
-
-  // Password state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,7 +55,6 @@ export default function ProfileView() {
     return localStorage.getItem('mjmovies_2fa') === 'true';
   });
 
-  // Remote Pairing state (DATOS REALES CON BACKEND)
   const [pairingCode, setPairingCode] = useState('--- - ---');
   const [rawPin, setRawPin] = useState('');
   const currentHost = typeof window !== 'undefined' ? (window.location.hostname || 'localhost') : 'localhost';
@@ -75,17 +66,11 @@ export default function ProfileView() {
   const [pinTimeLeft, setPinTimeLeft] = useState(0);
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [loadingRemote, setLoadingRemote] = useState(false);
-
-  // Modals state
   const [ratingModalItem, setRatingModalItem] = useState(null);
   const [selectedRating, setSelectedRating] = useState(5);
-
-  // Refs para navegación
   const historyRef = useRef(null);
   const securityRef = useRef(null);
   const remoteRef = useRef(null);
-
-  // Muestra de historial si el usuario aún no tiene visualizaciones
   const defaultSampleHistory = [
     {
       id: 'stranger-things',
@@ -149,7 +134,6 @@ export default function ProfileView() {
     },
   ];
 
-  // Cargar Historial real
   const fetchHistory = async () => {
     setLoadingHistory(true);
     try {
@@ -233,12 +217,10 @@ export default function ProfileView() {
     fetchHistory();
   }, []);
 
-  // CARGAR O SINCRONIZAR CONTROL REMOTO REAL CON BACKEND
   const syncRemoteSession = async (forceNew = false) => {
     setLoadingRemote(true);
     try {
       if (!forceNew) {
-        // Consultar sesión activa existente en base de datos
         const { data } = await api.get('/remote/session').catch(() => ({ data: {} }));
         if (data.serverUrl) setServerUrl(data.serverUrl);
         if (data?.session && new Date(data.session.expiresAt) > new Date()) {
@@ -254,7 +236,6 @@ export default function ProfileView() {
         }
       }
 
-      // Generar sesión real nueva
       const { data } = await api.get('/remote/pairing');
       if (data?.pairingCode) {
         const code = String(data.pairingCode);
@@ -279,13 +260,11 @@ export default function ProfileView() {
     syncRemoteSession(false);
   }, []);
 
-  // Timer regresivo del PIN
   useEffect(() => {
     if (pinTimeLeft <= 0) return;
     const timer = setInterval(() => {
       setPinTimeLeft((prev) => {
         if (prev <= 1) {
-          // Expiró: solicitar nuevo
           syncRemoteSession(true);
           return 0;
         }
@@ -295,7 +274,6 @@ export default function ProfileView() {
     return () => clearInterval(timer);
   }, [pinTimeLeft]);
 
-  // Polling suave para detectar si el móvil se conectó en tiempo real
   useEffect(() => {
     const pollTimer = setInterval(async () => {
       try {
@@ -310,13 +288,11 @@ export default function ProfileView() {
     return () => clearInterval(pollTimer);
   }, []);
 
-  // Generar nuevo PIN real en base de datos
   const handleGeneratePin = async () => {
     await syncRemoteSession(true);
     toastSuccess('Nuevo PIN de emparejamiento generado en el servidor');
   };
 
-  // Copiar URL del servidor
   const handleCopyServerUrl = () => {
     if (!serverUrl) return;
     navigator.clipboard.writeText(serverUrl);
@@ -325,7 +301,6 @@ export default function ProfileView() {
     setTimeout(() => setCopiedServerUrl(false), 2000);
   };
 
-  // Copiar PIN limpio
   const handleCopyPin = () => {
     const clean = rawPin || pairingCode.replace(/\s+/g, '').replace(/-/g, '');
     if (!clean) return;
@@ -335,7 +310,6 @@ export default function ProfileView() {
     setTimeout(() => setCopiedPin(false), 2000);
   };
 
-  // Desconectar dispositivo remoto real
   const handleDisconnectRemote = async () => {
     try {
       await api.post('/remote/disconnect');
@@ -346,7 +320,6 @@ export default function ProfileView() {
     }
   };
 
-  // Cambiar contraseña funcional
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -374,8 +347,6 @@ export default function ProfileView() {
       setSavingPassword(false);
     }
   };
-
-  // Toggle 2FA
   const handleToggle2FA = () => {
     const next = !twoFactorEnabled;
     setTwoFactorEnabled(next);
@@ -387,7 +358,6 @@ export default function ProfileView() {
     }
   };
 
-  // Descargar reporte de actividad CSV
   const handleDownloadActivity = () => {
     try {
       const headers = 'ID,Título,Calidad,Progreso (min),Duración (min),Porcentaje,Dispositivo,Fecha\n';
@@ -414,7 +384,6 @@ export default function ProfileView() {
     }
   };
 
-  // Borrar historial completo
   const handleClearHistory = async () => {
     if (!window.confirm('¿Estás seguro de que deseas vaciar tu historial de reproducción?')) return;
     try {
@@ -427,13 +396,11 @@ export default function ProfileView() {
     }
   };
 
-  // Eliminar un solo ítem de historial
   const handleRemoveHistoryItem = (id) => {
     setHistory((prev) => prev.filter((it) => it.id !== id));
     toastInfo('Título removido de tu historial');
   };
 
-  // Guardar avatar
   const handleSaveAvatar = (url) => {
     setAvatarUrl(url);
     localStorage.setItem('mjmovies_user_avatar', url);
@@ -441,7 +408,6 @@ export default function ProfileView() {
     toastSuccess('Foto de perfil actualizada');
   };
 
-  // Fuerza de contraseña
   const getPasswordStrength = () => {
     if (!newPassword) return { score: 0, text: 'Mínimo 8 caracteres', color: 'bg-neutral-700' };
     if (newPassword.length < 8) return { score: 1, text: 'Débil (menos de 8 caracteres)', color: 'bg-red-500' };
@@ -458,19 +424,14 @@ export default function ProfileView() {
   };
 
   const pwStrength = getPasswordStrength();
-
-  // Calcular horas totales dinámicas
   const totalWatchedSeconds = history.reduce((acc, it) => acc + (it.position || 0), 0);
   const totalWatchedHours = Math.max(340, Math.round(totalWatchedSeconds / 3600));
-
-  // Filtrado de historial
   const filteredHistory = history.filter((it) => {
     if (historyFilter === 'progress') return !it.completed;
     if (historyFilter === 'completed') return it.completed;
     return true;
   });
 
-  // Helper para porcentaje
   const getProgressInfo = (item) => {
     const pos = item.position || 0;
     const dur = item.duration || 5400;
@@ -481,14 +442,12 @@ export default function ProfileView() {
     return { posMin, durMin, pct, remainingMin };
   };
 
-  // Formato MM:SS
   const formatTimer = (sec) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  // Fecha de registro formateada
   const memberDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
     : 'Septiembre 2024';
@@ -1035,7 +994,7 @@ export default function ProfileView() {
                 </div>
 
                 <p className="text-[11px] text-neutral-300 leading-snug">
-                  ⚠️ <strong className="text-white">Para conectar el control:</strong> ingresa esta URL en tu app móvil (<code className="text-primary font-mono font-bold">{serverUrl}</code>). Corresponde al puerto 5000 del backend (no el 3000 del frontend ni el 8081 de Expo). Tu teléfono y esta PC deben estar en la misma red Wi-Fi.
+                  <strong className="text-white">Para conectar el control:</strong> ingresa esta URL en tu app móvil (<code className="text-primary font-mono font-bold">{serverUrl}</code>). Corresponde al puerto 5000 del backend (no el 3000 del frontend ni el 8081 de Expo). Tu teléfono y esta PC deben estar en la misma red Wi-Fi.
                 </p>
               </div>
 

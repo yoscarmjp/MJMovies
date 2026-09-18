@@ -7,8 +7,8 @@ import {
   getCookieOptions,
 } from '../services/authService.js';
 
-const ACCESS_COOKIE_MAX_AGE = 15 * 60 * 1000;       // 15 min
-const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 días
+const ACCESS_COOKIE_MAX_AGE = 15 * 60 * 1000;       
+const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 export async function register(req, res, next) {
   try {
@@ -40,17 +40,16 @@ export async function login(req, res, next) {
       userAgent: req.headers['user-agent'],
     });
 
-    // Enviar tokens en cookies HttpOnly (más seguro que localStorage)
     res.cookie('accessToken', accessToken, getCookieOptions(ACCESS_COOKIE_MAX_AGE));
     res.cookie('refreshToken', refreshToken, {
       ...getCookieOptions(REFRESH_COOKIE_MAX_AGE),
-      path: '/api/auth/refresh', // Solo enviar en el endpoint de refresh
+      path: '/api/auth/refresh',
     });
 
     res.json({
       message: 'Sesión iniciada',
       user,
-      accessToken, // También en body para clientes que prefieren header
+      accessToken,
     });
   } catch (error) {
     next(error);
@@ -62,7 +61,6 @@ export async function logout(req, res, next) {
     const refreshToken = req.cookies?.refreshToken;
     await logoutUser({ refreshToken, userId: req.user.id });
 
-    // Limpiar cookies
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
 

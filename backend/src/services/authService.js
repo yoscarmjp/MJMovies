@@ -29,29 +29,24 @@ function hashToken(token) {
 
 function getCookieOptions(maxAge) {
   return {
-    httpOnly: true,         // JS no puede acceder → protege contra XSS
-    secure: process.env.NODE_ENV === 'production', // HTTPS en producción
-    sameSite: 'strict',     // Protege contra CSRF
+    httpOnly: true,        
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',  
     maxAge,
     path: '/',
   };
 }
 
-// SERVICE FUNCTIONS
-
 export async function registerUser({ email, username, password, ipAddress, userAgent }) {
-  // Verificar duplicados con mensaje genérico (anti-enumeración)
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email }, { username }] },
     select: { id: true },
   });
 
   if (existing) {
-    // Mensaje genérico para no revelar si existe el email o username
     throw Object.assign(new Error('No se pudo crear la cuenta'), { statusCode: 409, code: 'DUPLICATE_ENTRY' });
   }
 
-  // Hash con bcrypt — factor 12 (buen balance seguridad/velocidad)
   const passwordHash = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.create({
@@ -64,13 +59,11 @@ export async function registerUser({ email, username, password, ipAddress, userA
 }
 
 export async function loginUser({ email, password, ipAddress, userAgent }) {
-  // Buscar usuario — respuesta IGUAL si no existe (anti-timing attack)
   const user = await prisma.user.findUnique({
     where: { email },
     select: { id: true, email: true, username: true, role: true, passwordHash: true, isActive: true },
   });
 
-  // Siempre comparar password aunque el usuario no exista (timing attack prevention)
   const dummyHash = '$2b$12$dummy.hash.to.prevent.timing.attack.AAAAAAAAAAAAAAAA';
   const isValid = await bcrypt.compare(password, user?.passwordHash || dummyHash);
 
@@ -81,7 +74,6 @@ export async function loginUser({ email, password, ipAddress, userAgent }) {
 
   const { accessToken, refreshToken } = generateTokens(user.id, user.role);
 
-  // Guardar refresh token hasheado en DB
   await prisma.refreshToken.create({
     data: {
       userId: user.id,
@@ -92,7 +84,6 @@ export async function loginUser({ email, password, ipAddress, userAgent }) {
     },
   });
 
-  // Actualizar last login
   await prisma.user.update({
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
@@ -125,13 +116,11 @@ export async function refreshTokens({ refreshToken, ipAddress }) {
     throw Object.assign(new Error('Token inválido o expirado'), { statusCode: 401, code: 'INVALID_TOKEN' });
   }
 
-  // Revocar token anterior (rotation)
   await prisma.refreshToken.update({
     where: { id: stored.id },
     data: { revoked: true },
   });
 
-  // Generar nuevo par
   const { accessToken, refreshToken: newRefreshToken } = generateTokens(stored.userId, stored.user.role);
 
   await prisma.refreshToken.create({
@@ -154,10 +143,6 @@ export async function logoutUser({ refreshToken, userId }) {
       data: { revoked: true },
     });
   }
-
-  // También revocar en Redis (blacklist del access token si es necesario)
-  // Por el TTL corto de 15min del access token, no es crítico
-
   logger.info(`Logout: ${userId}`);
 }
 

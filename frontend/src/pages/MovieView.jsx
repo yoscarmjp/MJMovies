@@ -10,12 +10,9 @@ export default function MovieView() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isAdmin } = useAuthStore()
-
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Series state
   const [isTv, setIsTv] = useState(false)
   const [seasonsCount, setSeasonsCount] = useState(1)
   const [activeSeason, setActiveSeason] = useState(1)

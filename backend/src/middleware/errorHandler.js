@@ -91,14 +91,12 @@ export function errorHandler(err, req, res, _next) {
     }
   }
 
-  // Error de CORS
   if (err.message === 'Not allowed by CORS') {
     statusCode = 403;
     code = 'CORS_ERROR';
     message = 'Origen no permitido';
   }
 
-  // Error de multer (upload)
   if (err.code === 'LIMIT_FILE_SIZE') {
     statusCode = 413;
     code = 'FILE_TOO_LARGE';
@@ -110,12 +108,10 @@ export function errorHandler(err, req, res, _next) {
     code,
   };
 
-  // Incluir errores de validación
   if (err instanceof ValidationError && err.errors) {
     response.errors = err.errors;
   }
 
-  // Stack trace solo en desarrollo
   if (process.env.NODE_ENV === 'development' && err.stack) {
     response.stack = err.stack;
   }

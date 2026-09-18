@@ -1,8 +1,6 @@
 import * as movieApi from '../services/movieApiService.js';
 import { logger } from '../utils/logger.js';
 
-// PELÍCULAS
-
 export async function getTrending(req, res, next) {
   try {
     const { timeWindow = 'week', genre, year, rating, sort } = req.query;
@@ -47,8 +45,6 @@ export async function searchMovies(req, res, next) {
     next(error);
   }
 }
-
-// SERIES
 
 export async function getPopularSeries(req, res, next) {
   try {
@@ -105,8 +101,6 @@ export async function getSeasonEpisodes(req, res, next) {
   }
 }
 
-// COMBINADOS (PELÍCULAS Y SERIES)
-
 export async function getTrendingAll(req, res, next) {
   try {
     const { timeWindow = 'week' } = req.query;
@@ -143,8 +137,6 @@ export async function getDetails(req, res, next) {
     next(error);
   }
 }
-
-// IMPORTACIÓN A MYSQL
 
 export async function importContent(req, res, next) {
   try {

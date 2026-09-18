@@ -37,18 +37,12 @@ export default function PlayerView() {
   const { id } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-
-  // URL Params
   const querySeason = parseInt(searchParams.get('season') || '1', 10)
   const queryEpisode = parseInt(searchParams.get('episode') || '1', 10)
   const queryType = searchParams.get('type') || ''
-
-  // Content state
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Series & Servers
   const [isTv, setIsTv] = useState(false)
   const [currentTmdbId, setCurrentTmdbId] = useState(null)
   const [currentSeason, setCurrentSeason] = useState(querySeason)
@@ -59,13 +53,9 @@ export default function PlayerView() {
   const [showServerMenu, setShowServerMenu] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('es')
   const [showLangMenu, setShowLangMenu] = useState(false)
-
-  // Episodes Modal & List
   const [showEpisodesModal, setShowEpisodesModal] = useState(false)
   const [loadingEpisodes, setLoadingEpisodes] = useState(false)
   const [episodesList, setEpisodesList] = useState([])
-
-  // Native Video Player State
   const videoRef = useRef(null)
   const iframeRef = useRef(null)
   const playerContainerRef = useRef(null)
@@ -73,7 +63,6 @@ export default function PlayerView() {
   const controlsTimeoutRef = useRef(null)
   const savedProgressRef = useRef(0)
   const hasResumedRef = useRef(false)
-
   const [isPlaying, setIsPlaying] = useState(false)
   const [isBuffering, setIsBuffering] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -84,8 +73,6 @@ export default function PlayerView() {
   const [bufferedPercent, setBufferedPercent] = useState(100)
   const [controlsVisible, setControlsVisible] = useState(true)
   const [playbackRate, setPlaybackRate] = useState(1.0)
-
-  // Remote Control State from Global Context
   const {
     pairingCode,
     qrCode: pairingQrCode,
@@ -105,7 +92,6 @@ export default function PlayerView() {
     }, 4000)
   }, [isPlaying, showEpisodesModal, showServerMenu, showLangMenu, showPairingPanel])
 
-  // Fetch episodes for a given season
   const fetchEpisodes = async (season, targetId) => {
     setLoadingEpisodes(true)
     try {
@@ -127,7 +113,6 @@ export default function PlayerView() {
     }
   }
 
-  // Apply playback resume position cleanly
   const applyResume = useCallback((vid) => {
     const video = vid || videoRef.current
     if (!video || !savedProgressRef.current || savedProgressRef.current <= 5) return
@@ -175,7 +160,6 @@ export default function PlayerView() {
         const defaultServ = servs.find((s) => s.isRecommended) || servs[0]
         setActiveServer(defaultServ)
 
-        // 2. Obtener metadatos
         let mData = null
         try {
           const mRes = await api.get(`/movies/${id}`)
@@ -192,7 +176,6 @@ export default function PlayerView() {
         setMovie(mData)
         document.title = `${mData.title} — MJMovies`
 
-        // Check saved progress
         const queryT = parseInt(searchParams.get('t') || '0', 10)
         let localT = 0
         try {
@@ -205,7 +188,6 @@ export default function PlayerView() {
           savedProgressRef.current = bestProgress
         }
 
-        // 3. Cargar episodios si es serie
         if (sData.isTv || sData.mediaType === 'tv') {
           await fetchEpisodes(currentSeason, sData.tmdbId)
         }
@@ -344,7 +326,6 @@ export default function PlayerView() {
     }
   }, [activeServer, applyResume])
 
-  // Periodic progress saving interval
   useEffect(() => {
     const timer = setInterval(() => {
       if (videoRef.current && isPlaying) {
@@ -354,7 +335,6 @@ export default function PlayerView() {
     return () => clearInterval(timer)
   }, [isPlaying, saveProgress])
 
-  // Save on unload / leave
   useEffect(() => {
     const handleUnload = () => {
       if (videoRef.current) {
@@ -368,7 +348,6 @@ export default function PlayerView() {
     }
   }, [saveProgress])
 
-  // Change Episode
   const changeEpisode = async (newEpisodeNum, targetSeason = currentSeason, targetLang = selectedLanguage) => {
     if (newEpisodeNum < 1) return
     setCurrentEpisode(newEpisodeNum)
@@ -403,7 +382,6 @@ export default function PlayerView() {
     }
   }
 
-  // Change Season
   const onSelectSeason = async (season) => {
     setCurrentSeason(season)
     setCurrentEpisode(1)
@@ -411,7 +389,6 @@ export default function PlayerView() {
     await changeEpisode(1, season, selectedLanguage)
   }
 
-  // Change Language (Español / Inglés)
   const handleLanguageChange = async (newLang) => {
     setSelectedLanguage(newLang)
     setShowLangMenu(false)
@@ -433,7 +410,6 @@ export default function PlayerView() {
       setActiveServer(best)
       setEmbedStarted(false)
 
-      // Si es reproductor nativo HLS, cambiar pista de audio activa
       if (hlsRef.current?.audioTracks?.length > 0) {
         const isEn = newLang === 'en'
         const idx = hlsRef.current.audioTracks.findIndex((t) => {
@@ -459,7 +435,6 @@ export default function PlayerView() {
     }
   }
 
-  // Native Controls Handlers
   const togglePlay = () => {
     const video = videoRef.current
     if (!video) return
@@ -504,7 +479,6 @@ export default function PlayerView() {
     toastInfo(`Velocidad: ${next}x`)
   }
 
-  // Sincronizar estado de reproducción hacia el control remoto móvil
   useEffect(() => {
     sendPlayerState({
       playing: isPlaying,
@@ -515,7 +489,6 @@ export default function PlayerView() {
     })
   }, [isPlaying, currentTime, duration, volume, isMuted, movie, sendPlayerState])
 
-  // Escuchar comandos del control remoto móvil
   useEffect(() => {
     const handleRemoteCommand = (e) => {
       const { command, payload } = e.detail || {}
@@ -1237,7 +1210,7 @@ export default function PlayerView() {
                     </button>
                   </div>
                   <p className="text-[10px] text-neutral-400 leading-tight">
-                    ⚠️ Usa el puerto <strong className="text-white font-mono">5000</strong> (Backend). No uses el 3000 ni el 8081.
+                   Usa el puerto <strong className="text-white font-mono">5000</strong> (Backend). No uses el 3000 ni el 8081.
                   </p>
                 </div>
               )}

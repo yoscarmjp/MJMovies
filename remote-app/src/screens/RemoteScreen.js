@@ -23,14 +23,13 @@ export default function RemoteScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    activateKeepAwakeAsync(); // Mantener pantalla encendida mientras el control está abierto
+    activateKeepAwakeAsync();
     return () => {
       deactivateKeepAwake();
     };
   }, []);
 
   useEffect(() => {
-    // Si se desconecta por completo
     if (!isConnected) {
       Alert.alert(
         'Desconectado',
@@ -40,7 +39,6 @@ export default function RemoteScreen({ navigation }) {
     }
   }, [isConnected]);
 
-  // Si está "Buscando TV", reintentar ping periódicamente al servidor
   useEffect(() => {
     let interval;
     if (!tvOnline && isConnected) {
@@ -373,7 +371,6 @@ const styles = StyleSheet.create({
   },
   progressFill: { height: '100%', backgroundColor: '#e50914', borderRadius: 2 },
 
-  // D-PAD
   dpad: { alignItems: 'center', marginVertical: 10 },
   dpadMiddle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   dpadBtn: {
@@ -407,7 +404,6 @@ const styles = StyleSheet.create({
   },
   okText: { color: 'white', fontSize: 20, fontWeight: '900' },
 
-  // Playback
   playbackRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -439,7 +435,6 @@ const styles = StyleSheet.create({
   },
   playIcon: { fontSize: 32 },
 
-  // Secondary
   secondaryRow: {
     flexDirection: 'row',
     gap: 14,
@@ -459,7 +454,6 @@ const styles = StyleSheet.create({
   secIcon: { fontSize: 18 },
   secLabel: { color: '#9999bb', fontSize: 10, fontWeight: '600' },
 
-  // TV Quick Nav Bar
   navBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -487,7 +481,6 @@ const styles = StyleSheet.create({
   navBarIcon: { fontSize: 15 },
   navBarLabel: { color: '#ccc', fontSize: 12, fontWeight: '600' },
 
-  // Search Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)',

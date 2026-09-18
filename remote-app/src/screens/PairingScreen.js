@@ -15,7 +15,6 @@ export default function PairingScreen({ navigation }) {
   const [pairingCode, setPairingCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Scanner modal state
   const [hasCameraPermission, setHasCameraPermission] = useState(null);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [scanned, setScanned] = useState(false);
@@ -23,7 +22,6 @@ export default function PairingScreen({ navigation }) {
   const { connect, loadSavedConfig } = useRemoteStore();
 
   useEffect(() => {
-    // Cargar URL guardada previamente
     loadSavedConfig().then((saved) => {
       if (saved) setServerUrl(saved);
     });
@@ -59,14 +57,12 @@ export default function PairingScreen({ navigation }) {
       if (parsed.code) targetCode = String(parsed.code);
       if (parsed.serverUrl) targetUrl = parsed.serverUrl;
     } catch {
-      // Si el QR solo contenía el código numérico directamente
       targetCode = data.trim();
     }
 
     setPairingCode(targetCode);
     setServerUrl(targetUrl);
 
-    // Intentar conexión automática si el código es válido
     if (targetCode.length === 6 && /^\d+$/.test(targetCode)) {
       doPair(targetUrl, targetCode);
     }
@@ -78,18 +74,15 @@ export default function PairingScreen({ navigation }) {
 
     if (!url) return Alert.alert('Error', 'Ingresa la URL del servidor MJMovies (ej: http://192.168.1.7:5000)');
 
-    // Añadir protocolo si falta
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = `http://${url}`;
     }
 
-    // Corregir automáticamente si el usuario puso el puerto del frontend (3000) o expo (8081)
     if (url.includes(':3000')) {
       url = url.replace(':3000', ':5000');
     } else if (url.includes(':8081')) {
       url = url.replace(':8081', ':5000');
     } else if (!url.match(/:\d+$/)) {
-      // Si el usuario puso solo la IP sin puerto, agregar el puerto 5000 del backend
       url = `${url}:5000`;
     }
 
@@ -339,7 +332,6 @@ const styles = StyleSheet.create({
   settingsLink: { alignItems: 'center', marginTop: 20, padding: 10 },
   settingsLinkText: { color: '#9999bb', fontSize: 13 },
 
-  // Scanner modal
   scannerContainer: { flex: 1, backgroundColor: '#000000' },
   scannerHeader: {
     flexDirection: 'row',

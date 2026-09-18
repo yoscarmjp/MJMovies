@@ -9,12 +9,10 @@ export default function MovieCard({ movie, className = '' }) {
 
   const isTv = movie.mediaType === 'tv'
 
-  // Determinar ruta de vista de película / reproductor
   const movieRoute = isTv
     ? `/watch/${movie.id || movie.tmdbId}?season=1&episode=1&type=tv`
     : `/watch/${movie.id || movie.tmdbId}`
 
-  // Proxy para TMDB
   const getPosterSrc = () => {
     if (imageError) return null
     let url = movie.posterUrl || movie.poster_path || movie.backdropUrl || movie.backdrop_path
@@ -30,12 +28,10 @@ export default function MovieCard({ movie, className = '' }) {
 
   const posterSrc = getPosterSrc()
 
-  // Si no tiene poster o la imagen falló, no debe mostrarse
   if (imageError || !posterSrc) {
     return null
   }
 
-  // Generar badge coleccionista dinámico
   const getBadge = () => {
     if (isTv) return { label: 'SERIE VIP', color: 'bg-indigo-600/90 text-white' }
     const rating = Number(movie.rating || 0)

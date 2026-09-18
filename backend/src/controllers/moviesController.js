@@ -2,7 +2,7 @@ import { prisma } from '../config/database.js';
 import { cache } from '../config/redis.js';
 import { NotFoundError } from '../middleware/errorHandler.js';
 
-const CACHE_TTL = 300; // 5 minutos
+const CACHE_TTL = 300;
 
 export async function getMovies(req, res, next) {
   try {
@@ -99,7 +99,6 @@ export async function getMovie(req, res, next) {
         throw new NotFoundError('Película');
       }
 
-      // Incrementar views de forma no bloqueante
       prisma.movie.update({
         where: { id },
         data: { views: { increment: 1 } },
@@ -166,7 +165,7 @@ export async function getGenres(req, res, next) {
       orderBy: { name: 'asc' },
     });
 
-    await cache.set(cacheKey, { genres }, 3600); // 1 hora
+    await cache.set(cacheKey, { genres }, 3600);
     res.json({ genres });
   } catch (error) {
     next(error);
@@ -179,7 +178,6 @@ export async function updateWatchProgress(req, res, next) {
     const { position } = req.body;
     const userId = req.user.id;
 
-    // Verificar que la película existe
     const movie = await prisma.movie.findUnique({
       where: { id: movieId },
       select: { id: true, duration: true },

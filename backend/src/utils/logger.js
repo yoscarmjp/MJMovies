@@ -5,9 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Formato de log — nunca incluir passwords, tokens o datos sensibles
 const sanitizeData = winston.format((info) => {
-  // Remover campos sensibles si accidentalmente llegaron
   const sensitive = ['password', 'passwordHash', 'token', 'refreshToken', 'secret'];
   if (info.data && typeof info.data === 'object') {
     sensitive.forEach((field) => {
@@ -27,7 +25,6 @@ export const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'mjmovies-api' },
   transports: [
-    // Consola en desarrollo
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
@@ -36,18 +33,16 @@ export const logger = winston.createLogger({
       silent: process.env.NODE_ENV === 'test',
     }),
 
-    // Archivo de errores
     new winston.transports.File({
       filename: path.join(__dirname, '..', '..', 'logs', 'error.log'),
       level: 'error',
-      maxsize: 10 * 1024 * 1024, // 10MB
+      maxsize: 10 * 1024 * 1024,
       maxFiles: 5,
     }),
 
-    // Archivo de todos los logs
     new winston.transports.File({
       filename: path.join(__dirname, '..', '..', 'logs', 'combined.log'),
-      maxsize: 50 * 1024 * 1024, // 50MB
+      maxsize: 50 * 1024 * 1024,
       maxFiles: 5,
     }),
   ],

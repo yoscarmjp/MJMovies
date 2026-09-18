@@ -14,19 +14,10 @@ import { z } from 'zod';
 
 const router = Router();
 
-// GET /api/movies — catálogo paginado
 router.get('/', validate(paginationSchema), optionalAuth, getMovies);
-
-// GET /api/movies/search
 router.get('/search', optionalAuth, searchMovies);
-
-// GET /api/movies/genres
 router.get('/genres', getGenres);
-
-// GET /api/movies/:id
 router.get('/:id', validate(uuidParamSchema), optionalAuth, getMovie);
-
-// POST /api/movies/:id/progress — guardar progreso de reproducción
 router.post(
   '/:id/progress',
   authenticate,
@@ -37,10 +28,7 @@ router.post(
   updateWatchProgress
 );
 
-// GET /api/movies/user/history — historial del usuario
 router.get('/user/history', authenticate, getWatchHistory);
-
-// DELETE /api/movies/user/history — limpiar historial del usuario
 router.delete('/user/history', authenticate, clearWatchHistory);
 
 export default router;

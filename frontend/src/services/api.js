@@ -3,14 +3,13 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: '/api',
   timeout: 30000,
-  withCredentials: true, // Enviar cookies HttpOnly automáticamente
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest', // CSRF protection hint
+    'X-Requested-With': 'XMLHttpRequest',
   },
 })
 
-// Interceptor de request — añadir token si existe en localStorage como fallback
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
   if (token) {
@@ -19,7 +18,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Interceptor de respuesta — manejar 401 automáticamente
 let isRefreshing = false
 let refreshQueue = []
 
@@ -28,10 +26,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Si el error es 401 y no hemos intentado refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Si ya hay un refresh en progreso, encolar este request
         return new Promise((resolve, reject) => {
           refreshQueue.push({ resolve, reject })
         }).then((token) => {
@@ -59,7 +55,6 @@ api.interceptors.response.use(
         refreshQueue.forEach(({ reject }) => reject(error))
         refreshQueue = []
         localStorage.removeItem('accessToken')
-        // Redirigir al login
         if (typeof window !== 'undefined') {
           window.location.href = '/login'
         }

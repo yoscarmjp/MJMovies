@@ -45,17 +45,14 @@ export default function HomeView() {
   const [topRatedMovies, setTopRatedMovies] = useState([])
   const [topRatedSeries, setTopRatedSeries] = useState([])
 
-  // Hero carousel state
   const [currentHeroIdx, setCurrentHeroIdx] = useState(0)
   const [isMuted, setIsMuted] = useState(true)
   const [savedToList, setSavedToList] = useState({})
-  const [carteleraFilter, setCarteleraFilter] = useState('all') // 'all', '4k', 'dolby', 'today'
+  const [carteleraFilter, setCarteleraFilter] = useState('all') 
 
-  // Top 10 horizontal scroll ref
   const top10Ref = useRef(null)
 
   useEffect(() => {
-    // 1. Cargar catálogo local
     const loadLocal = async () => {
       try {
         const [moviesRes, genresRes] = await Promise.all([
@@ -83,7 +80,6 @@ export default function HomeView() {
       }
     }
 
-    // 2. Cargar catálogo externo (TMDB o fallback del backend)
     const loadExternal = async () => {
       try {
         const [tMovies, tSeries, topM, topS] = await Promise.all([
@@ -104,7 +100,6 @@ export default function HomeView() {
       }
     }
 
-    // 3. Cargar historial (local y backend)
     const loadHistory = async () => {
       try {
         let backendItems = []
@@ -123,7 +118,6 @@ export default function HomeView() {
 
         const map = new Map()
 
-        // 1. Local items (solo con posición válida >= 15s)
         localItems.forEach((item) => {
           const key = item.movieId || item.id
           const pos = Number(item.position) || 0
@@ -147,7 +141,6 @@ export default function HomeView() {
           }
         })
 
-        // 2. Backend items (merge con local)
         backendItems.forEach((item) => {
           const key = item.movieId || item.movie?.id
           const pos = Number(item.position) || 0
@@ -179,7 +172,6 @@ export default function HomeView() {
     loadHistory()
   }, [isLoggedIn])
 
-  // Helper para descartar elementos sin portada válida
   const hasValidPoster = (item) => {
     if (!item) return false
     const url = item.backdropUrl || item.posterUrl || item.backdrop_path || item.poster_path
@@ -192,7 +184,6 @@ export default function HomeView() {
     return true
   }
 
-  // Helper estricto para el Hero: requiere banner/backdrop horizontal real
   const hasValidHeroBackdrop = (item) => {
     if (!item) return false
     const url = item.backdropUrl || item.backdrop_path
@@ -205,14 +196,11 @@ export default function HomeView() {
     return true
   }
 
-  // Build hero items list (solo items con banner horizontal válido)
   const heroList = useMemo(() => {
     const list = []
-    // 1. Featured local movies con backdrop real
     const featuredLocals = localMovies.filter((m) => m.featured && hasValidHeroBackdrop(m))
     list.push(...featuredLocals)
 
-    // 2. Add top trending movies & series con backdrop real
     const validMovies = trendingMovies.filter(hasValidHeroBackdrop)
     const validSeries = trendingSeries.filter(hasValidHeroBackdrop)
     if (validMovies.length > 0) list.push(validMovies[0])
@@ -220,7 +208,6 @@ export default function HomeView() {
     if (validMovies.length > 1) list.push(validMovies[1])
     if (validSeries.length > 1) list.push(validSeries[1])
 
-    // De-duplicate by id / tmdbId
     const seen = new Set()
     const unique = []
     for (const item of list) {
@@ -233,13 +220,11 @@ export default function HomeView() {
     return unique.slice(0, 4)
   }, [localMovies, trendingMovies, trendingSeries])
 
-  // Current active hero item
   const heroItem = useMemo(() => {
     if (heroList.length === 0) return null
     return heroList[currentHeroIdx] || heroList[0]
   }, [heroList, currentHeroIdx])
 
-  // Automatic hero rotation every 9 seconds
   useEffect(() => {
     if (heroList.length <= 1) return
     const interval = setInterval(() => {
@@ -248,7 +233,6 @@ export default function HomeView() {
     return () => clearInterval(interval)
   }, [heroList.length])
 
-  // Backdrop image URL helper
   const getBackdropUrl = (item) => {
     if (!item) return null
     let url = item.backdropUrl || item.posterUrl || item.backdrop_path || item.poster_path
@@ -321,7 +305,6 @@ export default function HomeView() {
     })
   }
 
-  // Quick category pills
   const categories = [
     { label: 'Todo el Catálogo', path: '/catalog', active: true },
     { label: 'Cine Taquillero', path: '/catalog?type=movie', icon: Film },
@@ -331,7 +314,6 @@ export default function HomeView() {
     { label: 'Estrenos Recientes', path: '/catalog?sort=newest', icon: Flame },
   ]
 
-  // Filtered Cartelera items (solo con portada válida)
   const carteleraItems = useMemo(() => {
     const combined = [...localMovies, ...trendingMovies].filter(hasValidPoster)
     if (carteleraFilter === '4k') {
@@ -346,7 +328,6 @@ export default function HomeView() {
     return combined.slice(0, 6)
   }, [localMovies, trendingMovies, carteleraFilter])
 
-  // Top 10 items (merged y filtrados solo con portada válida)
   const top10Items = useMemo(() => {
     const list = [...trendingMovies, ...trendingSeries, ...localMovies].filter(hasValidPoster)
     const seen = new Set()
@@ -361,7 +342,6 @@ export default function HomeView() {
     return unique.slice(0, 10)
   }, [trendingMovies, trendingSeries, localMovies])
 
-  // Real continue watching cards (solo items con portada y progreso válido)
   const continueWatchingItems = useMemo(() => {
     return watchHistory
       .filter((item) => {

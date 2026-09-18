@@ -13,7 +13,6 @@ const useRemoteStore = create((set, get) => ({
 
   setServerUrl: (url) => set({ serverUrl: url }),
 
-  // Cargar serverUrl guardada
   loadSavedConfig: async () => {
     try {
       const savedUrl = await AsyncStorage.getItem('serverUrl');
@@ -27,12 +26,10 @@ const useRemoteStore = create((set, get) => ({
     return null;
   },
 
-  // Conectar al servidor y emparejar con la TV
   connect: async (serverUrl, pairingCode) => {
     try {
       const cleanUrl = serverUrl.trim().replace(/\/$/, '');
 
-      // 1. Emparejamiento HTTP
       const res = await fetch(`${cleanUrl}/api/remote/pair`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,13 +44,11 @@ const useRemoteStore = create((set, get) => ({
       const data = await res.json();
       const { tvSessionId } = data;
 
-      // Desconectar socket previo si existía
       const oldSocket = get().socket;
       if (oldSocket) {
         oldSocket.disconnect();
       }
 
-      // 2. Conectar Socket.io con transporte optimizado y reconexión
       const socket = io(cleanUrl, {
         transports: ['websocket', 'polling'],
         reconnection: true,
@@ -66,7 +61,6 @@ const useRemoteStore = create((set, get) => ({
       socket.on('connect', () => {
         socket.emit('remote:join', { tvSessionId, pairingCode });
         set({ isConnected: true });
-        // Solicitar estado actual inmediatamente
         socket.emit('player:getState', { tvSessionId });
       });
 
@@ -85,7 +79,6 @@ const useRemoteStore = create((set, get) => ({
         set({ isConnected: false, tvOnline: false });
       });
 
-      // Guardar serverUrl persistente
       await AsyncStorage.setItem('serverUrl', cleanUrl);
 
       set({
@@ -102,11 +95,9 @@ const useRemoteStore = create((set, get) => ({
     }
   },
 
-  // Enviar comando al reproductor (WebSocket con fallback a HTTP)
   sendCommand: async (command, payload = {}) => {
     const { socket, isConnected, tvSessionId, pairingCode, serverUrl } = get();
 
-    // 1. Vía WebSocket directa (latencia instantánea de 1-5ms)
     if (socket && socket.connected) {
       socket.emit('remote:command', {
         tvSessionId,
@@ -117,7 +108,6 @@ const useRemoteStore = create((set, get) => ({
       return;
     }
 
-    // 2. Fallback HTTP si el socket estuviese temporalmente reconectando
     if (serverUrl && pairingCode) {
       try {
         await fetch(`${serverUrl}/api/remote/command`, {
@@ -131,7 +121,6 @@ const useRemoteStore = create((set, get) => ({
     }
   },
 
-  // Comando especial para seek absoluto en la barra de reproducción
   seekToPosition: (seconds) => {
     const { sendCommand } = get();
     sendCommand('seekTo', { position: seconds });

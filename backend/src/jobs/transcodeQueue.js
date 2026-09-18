@@ -8,7 +8,7 @@ let transcodeQueue = null;
 
 export function initTranscodeQueue() {
   if (!getRedis()) {
-    logger.warn('⚠️ Redis no disponible: Cola de transcodificación funcionando en modo local');
+    logger.warn('Redis no disponible: Cola de transcodificación funcionando en modo local');
     return null;
   }
 
@@ -19,21 +19,19 @@ export function initTranscodeQueue() {
       password: process.env.REDIS_PASSWORD || undefined,
     },
     defaultJobOptions: {
-      attempts: 2,              // Reintentar máximo 2 veces
+      attempts: 2,              
       backoff: { type: 'exponential', delay: 5000 },
-      removeOnComplete: 50,     // Mantener últimos 50 jobs completados
+      removeOnComplete: 50,
       removeOnFail: 100,
     },
   });
 
-  // Procesar trabajos — 1 a la vez (FFmpeg es intensivo en CPU)
   transcodeQueue.process(1, async (job) => {
     const { movieId, inputPath, jobId } = job.data;
 
     logger.info(`Iniciando transcode job ${jobId} para movie ${movieId}`);
 
     try {
-      // Marcar como PROCESSING
       await prisma.transcodeJob.update({
         where: { id: jobId },
         data: { status: 'PROCESSING', startedAt: new Date() },
@@ -44,23 +42,19 @@ export function initTranscodeQueue() {
         data: { status: 'PROCESSING' },
       });
 
-      // Transcodificar con callback de progreso
       const result = await transcodeToHLS(inputPath, movieId, async (progress) => {
         await job.progress(progress);
 
-        // Actualizar progreso en DB
         await prisma.transcodeJob.update({
           where: { id: jobId },
           data: { progress },
-        }).catch(() => { }); // No fallar por un update de progreso
+        }).catch(() => { }); 
 
-        // Emitir a clientes vía WebSocket (si io está disponible)
         if (global.io) {
           global.io.to(`admin`).emit('transcode:progress', { movieId, jobId, progress });
         }
       });
 
-      // Actualizar DB con resultado
       await prisma.transcodeJob.update({
         where: { id: jobId },
         data: {

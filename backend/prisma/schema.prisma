@@ -1,3 +1,4 @@
+
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextIndex", "fullTextSearch"]
@@ -7,7 +8,6 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
-
 
 model User {
   id           String   @id @default(uuid()) @db.VarChar(36)
@@ -53,6 +53,7 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+
 model Movie {
   id             String        @id @default(uuid()) @db.VarChar(36)
   title          String        @db.VarChar(255)
@@ -62,11 +63,11 @@ model Movie {
   duration       Int?          
   rating         Decimal?      @db.Decimal(3, 1)
   director       String?       @db.VarChar(255)
-  cast           Json?        
+  cast           Json?         
   posterUrl      String?       @map("poster_url") @db.VarChar(500)
   backdropUrl    String?       @map("backdrop_url") @db.VarChar(500)
   trailerUrl     String?       @map("trailer_url") @db.VarChar(500)
-  streamPath     String?       @map("stream_path") @db.VarChar(500)
+  streamPath     String?       @map("stream_path") @db.VarChar(500) 
   originalFile   String?       @map("original_file") @db.VarChar(500)
   fileSize       BigInt?       @map("file_size")
   status         MovieStatus   @default(PENDING)

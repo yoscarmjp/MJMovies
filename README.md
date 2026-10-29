@@ -1,4 +1,4 @@
-# 🎬 MJMovies — Private Streaming Platform
+# MJMovies — Private Streaming Platform
 
 > A self-hosted, Netflix-style streaming platform with an admin panel, HLS video transcoding, and a **mobile remote control app** for Smart TVs.
 

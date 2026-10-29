@@ -1,126 +1,113 @@
 @echo off
 chcp 65001 >nul
-title MJMovies — Compilador de APK Control Remoto
+title MJMovies — Remote App APK Builder
 color 0A
 
-:: Configurar EAS para que no requiera Git
 set EAS_NO_VCS=1
 
-:INICIO
+:START
 cls
-echo ===============================================================================
-echo                MJMOVIES REMOTE — COMPILADOR DE APK PARA ANDROID                
-echo ===============================================================================
+echo                 MJMOVIES REMOTE — ANDROID APK BUILDER                
 echo.
 cd /d "%~dp0remote-app"
 
 if not exist "node_modules" (
-    echo [*] Instalando dependencias con pnpm...
+    echo [*] Installing dependencies with pnpm...
     call pnpm install
 )
 
-echo [*] Verificando sesion de Expo / EAS...
+echo [*] Checking Expo / EAS session...
 call npx eas-cli whoami >nul 2>&1
 
 if %ERRORLEVEL% EQU 0 (
-    echo [OK] Sesion activa en Expo.
-    goto BUILD_DIRECTO
+    echo [OK] Active Expo session found.
+    goto BUILD_DIRECT
 ) else (
     goto NO_AUTH
 )
 
 :NO_AUTH
 echo.
-echo [!] Para compilar la APK en la nube necesitas una cuenta GRATUITA de Expo.
+echo [!] To build the APK in the cloud you need a FREE Expo account.
 echo.
-echo   [1] Iniciar sesion en Expo (EAS Login)
-echo   [2] Crear cuenta nueva GRATIS (Registro rapido en 30 segundos)
-echo   [3] Probar la App en tu movil YA MISMO con Expo Go (Sin compilar APK)
-echo   [0] Salir
+echo   [1] Log in to Expo (EAS Login)
+echo   [2] Create a FREE account (Quick registration in 30 seconds)
+echo   [3] Test the App on your phone RIGHT NOW with Expo Go (No APK build needed)
+echo   [0] Exit
 echo.
-set /p OPCION_AUTH="Selecciona una opcion (1-3): "
+set /p OPCION_AUTH="Select an option (1-3): "
 
 if "%OPCION_AUTH%"=="1" goto LOGIN_EXPO
 if "%OPCION_AUTH%"=="2" goto REGISTER_EXPO
 if "%OPCION_AUTH%"=="3" goto RUN_EXPO_GO
 if "%OPCION_AUTH%"=="0" exit /b 0
 
-echo Opcion invalida.
+echo Invalid option.
 pause
-goto INICIO
+goto START
 
 :LOGIN_EXPO
 cls
-echo ===============================================================================
-echo   Iniciar Sesion en Expo (EAS)
-echo ===============================================================================
+echo   Log in to Expo (EAS)
 echo.
-echo Ingresa tu usuario/email y contrasena registrados en https://expo.dev
+echo Enter your username/email and password registered at https://expo.dev
 echo.
 call npx eas-cli login
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo [OK] !Sesion iniciada correctamente!
+    echo [OK] Logged in successfully!
     pause
-    goto BUILD_DIRECTO
+    goto BUILD_DIRECT
 ) else (
     echo.
-    echo [X] Error de autenticacion. Si no tienes cuenta aun, elige la opcion [2] para crearla.
+    echo [X] Authentication error. If you don't have an account yet, choose option [2] to create one.
     pause
     goto NO_AUTH
 )
 
 :REGISTER_EXPO
 cls
-echo ===============================================================================
-echo   Crear Cuenta Gratuita en Expo
-echo ===============================================================================
+echo   Create a Free Expo Account
 echo.
-echo Puedes registrarte rapidamente a continuacion o en: https://expo.dev/signup
+echo You can register quickly below or at: https://expo.dev/signup
 echo.
 call npx eas-cli register
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo [OK] !Cuenta creada e iniciada exitosamente!
+    echo [OK] Account created and logged in successfully!
     pause
-    goto BUILD_DIRECTO
+    goto BUILD_DIRECT
 ) else (
     echo.
-    echo [!] Tambien puedes abrir https://expo.dev/signup en tu navegador para registrarte.
+    echo [!] You can also open https://expo.dev/signup in your browser to register.
     pause
     goto NO_AUTH
 )
 
 :RUN_EXPO_GO
 cls
-echo ===============================================================================
-echo   Iniciando Servidor Expo para Probar en el Movil (Expo Go)
-echo ===============================================================================
+echo   Starting Expo Server to Test on Phone (Expo Go)
 echo.
-echo   1. Descarga la app 'Expo Go' desde Google Play Store en tu movil Android.
-echo   2. Conecta tu movil a la misma red Wi-Fi que esta PC.
-echo   3. Escanea el codigo QR que aparecera a continuacion con la app Expo Go.
+echo   1. Download the 'Expo Go' app from the Google Play Store on your Android phone.
+echo   2. Connect your phone to the same Wi-Fi network as this PC.
+echo   3. Scan the QR code that will appear below using the Expo Go app.
 echo.
 call npx expo start
 pause
-goto INICIO
+goto START
 
-:BUILD_DIRECTO
+:BUILD_DIRECT
 cls
-echo ===============================================================================
-echo   Compilando APK de MJMovies Remote con EAS Build
-echo ===============================================================================
+echo   Building MJMovies Remote APK with EAS Build
 echo.
-echo [*] Enviando build a los servidores de Expo para generar el archivo .apk...
-echo [i] Modo sin Git activado (EAS_NO_VCS=1).
-echo [i] Al finalizar recibiras un enlace directo para descargar e instalar la APK en tu Android.
+echo [*] Uploading build to Expo servers to generate the .apk file...
+echo [i] Git-less mode enabled (EAS_NO_VCS=1).
+echo [i] When finished, you will receive a direct link to download and install the APK on your Android device.
 echo.
 set EAS_NO_VCS=1
 call npx eas-cli build --platform android --profile preview
 
 echo.
-echo ===============================================================================
-echo   Proceso finalizado.
-echo ===============================================================================
+echo   Process finished.
 pause
-goto INICIO
+goto START
